@@ -30,7 +30,7 @@ import struct, sys
 
 # from current dir
 from receive_path import receive_path
-import fusb_options
+#import fusb_options
 
 class my_top_block(gr.top_block):
     def __init__(self, callback, options):
@@ -106,7 +106,7 @@ class my_top_block(gr.top_block):
 
         expert.add_option("", "--rx-freq", type="eng_float", default=None,
                           help="set Rx frequency to FREQ [default=%default]", metavar="FREQ")
-        expert.add_option("-r", "--rate", type="eng_float", default=250e3,
+        expert.add_option("-r", "--rate", type="eng_float", default=1e6,
                           help="set sample rate to [default=%default]")
         expert.add_option("", "--snr", type="eng_float", default=30,
                           help="set the SNR of the channel in dB [default=%default]")
@@ -169,7 +169,7 @@ def main():
     receive_path.add_options(parser, expert_grp)
     blks2.ofdm_mod.add_options(parser, expert_grp)
     blks2.ofdm_demod.add_options(parser, expert_grp)
-    fusb_options.add_options(expert_grp)
+    #fusb_options.add_options(expert_grp)
 
     (options, args) = parser.parse_args ()
 

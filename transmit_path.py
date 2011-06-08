@@ -61,9 +61,9 @@ class transmit_path(gr.hier_block2):
     def set_tx_amplitude(self, ampl):
         """
         Sets the transmit amplitude sent to the USRP
-        @param: ampl 0 <= ampl < 32768.  Try 8000
+        @param: ampl 0 <= ampl < 1.  Try .25
         """
-        self._tx_amplitude = max(0.0, min(ampl, 32767.0))
+        self._tx_amplitude = max(0.0, min(ampl, 1.0))
         self.amp.set_k(self._tx_amplitude)
         
     def send_pkt(self, payload='', eof=False):
@@ -76,8 +76,8 @@ class transmit_path(gr.hier_block2):
         """
         Adds transmitter-specific options to the Options Parser
         """
-        normal.add_option("", "--tx-amplitude", type="eng_float", default=200, metavar="AMPL",
-                          help="set transmitter digital amplitude: 0 <= AMPL < 32768 [default=%default]")
+        normal.add_option("", "--tx-amplitude", type="eng_float", default=.2, metavar="AMPL",
+                          help="set transmitter digital amplitude: 0 <= AMPL < 1.0 [default=%default]")
         normal.add_option("-v", "--verbose", action="store_true", default=False)
         expert.add_option("", "--log", action="store_true", default=False,
                           help="Log all parts of flow graph to file (CAUTION: lots of data)")
