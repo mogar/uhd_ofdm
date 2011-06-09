@@ -56,7 +56,7 @@ class my_top_block(gr.top_block):
 
         # Set up receive path
         self.rxpath = receive_path(callback, options)
-        self.file = gr.file_sink(gr.sizeof_gr_complex, "rx_data")
+        #self.file = gr.file_sink(gr.sizeof_gr_complex, "rx_data.dat")
 
         self.connect(self.u, self.rxpath)
         self.connect(self.u, self.file)
