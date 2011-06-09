@@ -59,7 +59,7 @@ class my_top_block(gr.top_block):
         #self.file = gr.file_sink(gr.sizeof_gr_complex, "rx_data.dat")
 
         self.connect(self.u, self.rxpath)
-        self.connect(self.u, self.file)
+        #self.connect(self.u, self.file)
         
     def _setup_usrp_source(self):
         self.u = uhd.usrp_source(
