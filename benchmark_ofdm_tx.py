@@ -55,6 +55,7 @@ class my_top_block(gr.top_block):
         self.txpath = transmit_path(options)
 
         self.connect(self.txpath, self.u)
+        #self.connect(self.txpath, gr.file_sink(gr.sizeof_gr_complex, "txpath.dat"))
         
         if options.verbose:
         	self._print_verbage()
@@ -115,7 +116,7 @@ class my_top_block(gr.top_block):
         expert.add_option("", "--tx-freq", type="eng_float", default=None,
                           help="set transmit frequency to FREQ [default=%default]", metavar="FREQ")
         expert.add_option("-r", "--rate", type="eng_float", default=1e6,
-                          help="set fpga interpolation rate to INTERP [default=%default]")
+                          help="set fpga sample rate to RATE [default=%default]")
     # Make a static method to call before instantiation
     add_options = staticmethod(add_options)
 
