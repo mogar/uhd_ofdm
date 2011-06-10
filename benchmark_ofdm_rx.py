@@ -102,14 +102,11 @@ class my_top_block(gr.top_block):
         Adds usrp-specific options to the Options Parser
         """
         add_freq_option(normal)
-        normal.add_option("-R", "--rx-subdev-spec", type="subdev", default=None,
-                          help="select USRP Rx side A or B")
-        normal.add_option("", "--rx-gain", type="eng_float", default=None, metavar="GAIN",
-                          help="set receiver gain in dB [default=midpoint].  See also --show-rx-gain-range")
+        normal.add_option("", "--rx-gain", type="eng_float", default=17, metavar="GAIN",
+                          help="set receiver gain in dB [default=%default].  See also --show-rx-gain-range")
         normal.add_option("", "--show-rx-gain-range", action="store_true", default=False, 
                           help="print min and max Rx gain available on selected daughterboard")
         normal.add_option("-v", "--verbose", action="store_true", default=False)
-
         expert.add_option("", "--rx-freq", type="eng_float", default=None,
                           help="set Rx frequency to FREQ [default=%default]", metavar="FREQ")
         expert.add_option("-r", "--rate", type="eng_float", default=1e6,

@@ -109,10 +109,7 @@ class my_top_block(gr.top_block):
         Adds usrp-specific options to the Options Parser
         """
         add_freq_option(normal)
-        normal.add_option("-T", "--tx-subdev-spec", type="subdev", default=None,
-                          help="select USRP Tx side A or B")
         normal.add_option("-v", "--verbose", action="store_true", default=False)
-
         expert.add_option("", "--tx-freq", type="eng_float", default=None,
                           help="set transmit frequency to FREQ [default=%default]", metavar="FREQ")
         expert.add_option("-r", "--rate", type="eng_float", default=1e6,
@@ -161,7 +158,7 @@ def main():
                       help="set megabytes to transmit [default=%default]")
     parser.add_option("","--discontinuous", action="store_true", default=False,
                       help="enable discontinuous mode")
-    parser.add_option("","--gain", type="eng_float", default=10.0,
+    parser.add_option("","--gain", type="eng_float", default=11.5,
     				  help="set transmitter gain [default=%default]")
 
     my_top_block.add_options(parser, expert_grp)
