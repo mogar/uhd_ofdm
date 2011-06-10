@@ -1,1 +1,17 @@
 This project is a modification of the OFDM tunnel code from gnuradio to use UHD.
+
+You may have to account for frequency offsets when using OFDM between two USRPs. You can do this 
+manually by transmitting from one USRP on the desired frequency (in our examples 648.8M). At the
+receiver, use an FFT to view the OFDM signal. There should be two null subcarriers right in the
+center of the OFDM boxcar. Those should be centered around your center frequency. Adjust the 
+tx frequency until it's as close as you can get.
+
+
+
+To use the benchmark scripts:
+-----------------------------
+Note: I found that I had an overall frequency offset of about 1KHz, so my frequency settings are
+not the same in these examples. You'll have to figure out your offset yourself.
+
+TX side: python benchmark_ofdm_tx.py -f 648.801M -v --gain=11.5 -M 15 --tx-amplitude=.8 --rate=1M
+RX side: python benchmark_ofdm_rx.py -f 648.8M -v --rx-gain=17 --rate=1M

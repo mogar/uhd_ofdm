@@ -40,6 +40,7 @@ class my_top_block(gr.top_block):
         self._rx_gain            = options.rx_gain         # receiver's gain
         self._rx_subdev_spec     = options.rx_subdev_spec  # daughterboard to use
         self._rate               = options.rate            # USRP sample rate
+        self._snr                 = options.snr
 
         if self._rx_freq is None:
             sys.stderr.write("-f FREQ or --freq FREQ or --rx-freq FREQ must be specified\n")
@@ -53,10 +54,13 @@ class my_top_block(gr.top_block):
             print "Rx Gain Range: minimum = %g, maximum = %g, step size = %g" \
                   % (g.start(), g.stop(), g.step())
         self.set_gain(options.rx_gain)
-
+                
+        if options.verbose:
+        	self._print_verbage()
+		
         # Set up receive path
         self.rxpath = receive_path(callback, options)
-        #self.file = gr.file_sink(gr.sizeof_gr_complex, "rx_data.dat")
+        #self.file = gr.file_sink(gr.sizeof_gr_complex, "usrp_source.dat")
 
         self.connect(self.u, self.rxpath)
         #self.connect(self.u, self.file)
@@ -116,6 +120,16 @@ class my_top_block(gr.top_block):
 
     # Make a static method to call before instantiation
     add_options = staticmethod(add_options)
+    
+    def _print_verbage(self):
+        """
+        Prints information about the transmit path
+        """
+        #print "modulation:      %s"    % (self._modulator_class.__name__)
+        print "sample rate      %3d"   % (self._rate)
+        print "Rx Frequency:    %s"    % (eng_notation.num_to_str(self._rx_freq))
+        print "Rx Gain:         %s"    % (self._rx_gain)
+        print "SNR:             %s"    % (self._snr)
 
 def add_freq_option(parser):
     """
