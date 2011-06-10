@@ -78,7 +78,7 @@ class transmit_path(gr.hier_block2):
         """
         Adds transmitter-specific options to the Options Parser
         """
-        normal.add_option("", "--tx-amplitude", type="eng_float", default=.2, metavar="AMPL",
+        normal.add_option("", "--tx-amplitude", type="eng_float", default=.8, metavar="AMPL",
                           help="set transmitter digital amplitude: 0 <= AMPL < 1.0 [default=%default]")
         normal.add_option("-v", "--verbose", action="store_true", default=False)
         expert.add_option("", "--log", action="store_true", default=False,

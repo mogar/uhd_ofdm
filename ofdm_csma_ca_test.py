@@ -94,6 +94,7 @@ class usrp_graph(gr.top_block):
         gr.top_block.__init__(self)
 
         self._tx_freq            = options.tx_freq         # tranmitter's center frequency
+        self._tx_gain            = options.tx_gain         # transmitter's gain
         #self._tx_subdev_spec     = options.tx_subdev_spec  # daughterboard to use
         #updated 2011 May 27, MR
         self._samp_rate			 = options.samp_rate	   # sample rate for USRP
@@ -162,8 +163,11 @@ class usrp_graph(gr.top_block):
         # Set the USRP for maximum transmit gain
         # (Note that on the RFX cards this is a nop.)
         #self.set_gain(self.subdev.gain_range()[1])
-        g = self.u_snk.get_gain_range()
-        self.set_gain((float(g.stop()) - float(g.start()))/2 + float(g.start()))
+        g = self.u.get_gain_range()
+        #set the gain to the midpoint if it's currently out of bounds
+        if self._tx_gain > g.stop() or self._tx_gain < g.start():
+        	self._tx_gain = (g.stop() + g.start()) / 2
+        self.u_snk.set_gain(self._tx_gain)
 
         # enable Auto Transmit/Receive switching
         #self.set_auto_tr(True)
@@ -180,6 +184,12 @@ class usrp_graph(gr.top_block):
 
         #self.u_src.set_decim_rate(self._decim)
         self.u_src.set_samp_rate(self._samp_rate)
+        
+        g = self.u.get_gain_range()
+        #set the gain to the midpoint if it's currently out of bounds
+        if self._rx_gain > g.stop() or self._rx_gain < g.start():
+        	self._rx_gain = (g.stop() + g.start()) / 2
+        self.u_src.set_gain(self._rx_gain)
 
         # determine the daughterboard subdevice we're using
         #if self._rx_subdev_spec is None:
@@ -211,16 +221,17 @@ class usrp_graph(gr.top_block):
             return True
 
         return False
-        
-    def set_gain(self, gain):
-        """
-        Sets the analog gain in the USRP
-        """
-        self.gain = gain
-        #updated 2011 May 26, MR
-        #TODO: ensure that the correct index is chosen for these two
-        self.u_snk.set_gain(gain, 0)
-        #self.subdev.set_gain(gain)
+    
+    #removed 2011 June 10, MR
+    #def set_snk_gain(self, gain):
+    #    """
+    #    Sets the analog gain in the USRP
+    #    """
+    #    self.gain = gain
+    #    #updated 2011 May 26, MR
+    #    #TODO: ensure that the correct index is chosen for these two
+    #    self.u_snk.set_gain(gain, 0)
+    #    #self.subdev.set_gain(gain)
 
 	#removed 2011 May 27, MR
     #def set_auto_tr(self, enable):
@@ -240,28 +251,29 @@ class usrp_graph(gr.top_block):
         #normal.add_option("-T", "--tx-subdev-spec", type="subdev", default=None,
         #                  help="select USRP Tx side A or B")
         normal.add_option("-v", "--verbose", action="store_true", default=False)
-
+        expert.add_option("", "--rx-freq", type="eng_float", default=None,
+                          help="set Rx frequency to FREQ [default=%default]", metavar="FREQ")
         expert.add_option("", "--tx-freq", type="eng_float", default=None,
-                          help="set transmit frequency to FREQ [default=%default]", metavar="FREQ")
+                          help="set Tx frequency to FREQ [default=%default]", metavar="FREQ")
         #updated 2011 May 27, MR
-        expert.add_option("-s", "--samp_rate", type="intx", default=2000000,
+        expert.add_option("-s", "--samp_rate", type="intx", default=1000000,
         				   help="set sample rate for USRP to SAMP_RATE [default=%default]")
         #expert.add_option("-i", "--interp", type="intx", default=256,
         #                  help="set fpga interpolation rate to INTERP [default=%default]")
         #normal.add_option("-R", "--rx-subdev-spec", type="subdev", default=None,
         #                  help="select USRP Rx side A or B")
-        normal.add_option("", "--rx-gain", type="eng_float", default=None, metavar="GAIN",
-                          help="set receiver gain in dB [default=midpoint].  See also --show-rx-gain-range")
+        normal.add_option("", "--rx-gain", type="eng_float", default=17, metavar="GAIN",
+                          help="set receiver gain in dB [default=%default].  See also --show-rx-gain-range")
         normal.add_option("", "--show-rx-gain-range", action="store_true", default=False, 
-                          help="print min and max Rx gain available on selected daughterboard")
-        normal.add_option("-v", "--verbose", action="store_true", default=False)
-
-        expert.add_option("", "--rx-freq", type="eng_float", default=None,
-                          help="set Rx frequency to FREQ [default=%default]", metavar="FREQ")
+                          help="print min and max Rx gain available")        
+        normal.add_option("", "--tx-gain", type="eng_float", default=11.5, metavar="GAIN",
+                          help="set transmitter gain in dB [default=%default].  See also --show-tx-gain-range")
+        normal.add_option("", "--show-tx-gain-range", action="store_true", default=False, 
+                          help="print min and max Tx gain available")
         #expert.add_option("-d", "--decim", type="intx", default=128,
         #                  help="set fpga decimation rate to DECIM [default=%default]")
         expert.add_option("", "--snr", type="eng_float", default=30,
-                          help="set the SNR of the channel in dB [default=%default]")
+                          help="set the SNR of the Rx channel in dB [default=%default]")
    
     # Make a static method to call before instantiation
     add_options = staticmethod(add_options)
