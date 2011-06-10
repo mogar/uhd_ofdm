@@ -163,7 +163,7 @@ class usrp_graph(gr.top_block):
         # Set the USRP for maximum transmit gain
         # (Note that on the RFX cards this is a nop.)
         #self.set_gain(self.subdev.gain_range()[1])
-        g = self.u.get_gain_range()
+        g = self.u_snk.get_gain_range()
         #set the gain to the midpoint if it's currently out of bounds
         if self._tx_gain > g.stop() or self._tx_gain < g.start():
         	self._tx_gain = (g.stop() + g.start()) / 2
@@ -185,7 +185,7 @@ class usrp_graph(gr.top_block):
         #self.u_src.set_decim_rate(self._decim)
         self.u_src.set_samp_rate(self._samp_rate)
         
-        g = self.u.get_gain_range()
+        g = self.u_src.get_gain_range()
         #set the gain to the midpoint if it's currently out of bounds
         if self._rx_gain > g.stop() or self._rx_gain < g.start():
         	self._rx_gain = (g.stop() + g.start()) / 2
