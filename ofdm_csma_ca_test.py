@@ -380,6 +380,8 @@ class cs_mac(object):
         		if not self.tb.carrier_sensed():
         			self.tb.txpath.send_pkt("CTS")
         			#self.output_data_file.write("Sent: CTS\n")
+        		if self.verbose:
+        			print "received RTS"
         	elif payload == "CTS":
         		self.CTS_rcvd = True
         	else:
