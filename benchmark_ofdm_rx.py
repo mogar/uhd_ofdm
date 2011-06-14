@@ -71,7 +71,7 @@ class my_top_block(gr.top_block):
 			num_channels=1,
 		)
         self.u.set_samp_rate(self._rate)
-        self.u_src.set_antenna("TX/RX", 0)
+        self.u.set_antenna("TX/RX", 0)
 
 
     def set_freq(self, target_freq):
