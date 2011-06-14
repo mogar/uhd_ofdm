@@ -184,6 +184,7 @@ class usrp_graph(gr.top_block):
 
         #self.u_src.set_decim_rate(self._decim)
         self.u_src.set_samp_rate(self._samp_rate)
+        self.u_src.set_antenna("TX/RX", 0)
         
         g = self.u_src.get_gain_range()
         #set the gain to the midpoint if it's currently out of bounds
