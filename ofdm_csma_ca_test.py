@@ -331,6 +331,7 @@ class cs_mac(object):
         #control packet bookkeeping
         self.CTS_rcvd = False
         self.ACK_rcvd = False
+        self.EOF_rcvd = False
         
         #data file to store measurements
         #filename = "CDMA_CA_experiment_" + time.strftime('%y%m%d_%H%M%S') + ".txt"
@@ -344,7 +345,12 @@ class cs_mac(object):
         self.SIFS_time = .001#.000028 #seconds
         self.DIFS_time = .004#.000128 #seconds
         self.ctl_pkt_time = .001 #seconds. How long should this be?
-        self.backoff_time_unit = .001#.000078 #seconds 
+        self.backoff_time_unit = .001#.000078 #seconds
+        
+        #measurement variables
+        self.rcvd = 0
+        self.rcvd_ok = 0
+        self.sent = 0
     
     def __del__(self):
     	#self.output_data_file.close()
@@ -363,12 +369,14 @@ class cs_mac(object):
         @param payload: contents of the packet (string)
         """
         #self.output_data_file.write("RCVD: %r\n" % ok)
+        self.rcvd += 1
 
         if self.verbose:
             print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))
         if ok:
         	#question: is it possible that a packet sent from this function will 
         	#interfere with a packet sent from the main_loop function?
+        	self.rcvd_ok += 1
         	
         	#is this a ctl packet?
         	if payload == "ACK":
@@ -379,11 +387,14 @@ class cs_mac(object):
         		#only send the CTS signal if noone else is transmitting
         		if not self.tb.carrier_sensed():
         			self.tb.txpath.send_pkt("CTS")
+        			self.sent += 1
         			#self.output_data_file.write("Sent: CTS\n")
         		if self.verbose:
         			print "received RTS"
         	elif payload == "CTS":
         		self.CTS_rcvd = True
+        	elif payload == "EOF":
+        		self.EOF_rcvd = True
         	else:
 	        	#wait for SIFS
 	        	self.MAC_delay(self.SIFS_time)
@@ -391,6 +402,7 @@ class cs_mac(object):
     	    	#currently not affixing ACKS to other packets that are being sent
     	    	#this will probably cause latency issues
         		self.tb.txpath.send_pkt("ACK")
+        		self.sent += 1
         		#self.output_data_file.write("Sent: ACK\n")
         		#self.rcvd_packets_file.write(payload + "\n")
 	
@@ -418,7 +430,9 @@ class cs_mac(object):
     def main_loop(self, num_packets):
     	#updated by Morgan Redfield on 2011 May 16
         """
-        Main loop for MAC.
+        Main loop for MAC. This loop will generate and send num_packets worth of packets.
+        It will then send an eof packet. The loop will exit when it has both sent and received
+        an eof packet (to make sure the other node is also done sending).
         
         @param num_packets: number of packets to send before exiting loop
 
@@ -430,7 +444,6 @@ class cs_mac(object):
             #self.output_data_file.write(payload)
             #self.output_data_file.write("\n")
             
-            current_packet = current_packet + 1
             #if not payload:
             #    self.tb.txpath.send_pkt(eof=True)
             #    break
@@ -476,6 +489,7 @@ class cs_mac(object):
             	if not self.tb.carrier_sensed():
             		#send RTS
             		self.tb.txpath.send_pkt("RTS")
+            		self.sent += 1
             		#self.output_data_file.write("Sent: RTS\n")
             		#wait for SIFS + CTS packet time
             		self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
@@ -488,6 +502,7 @@ class cs_mac(object):
             			#self.output_data_file.write("Sent: data\n")
             			#wait for SIFS + ACK packet time
             			self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
+            			self.sent += 1
             			#ACK should be true now, so the loop will exit
             		else: #otherwise we should backoff, right?
             			backoff_now = True
@@ -502,7 +517,14 @@ class cs_mac(object):
             	pass
             	
             #make sure that any recieved ACKs don't get confused with the next packet
+            if self.ACK_rcvd:
+            	current_packet = current_packet + 1
+
             self.ACK_rcvd = False
+
+        while not self.EOF_rcvd:
+        	#just hang out until the other node is done
+        	pass
 
 
 
@@ -604,6 +626,11 @@ def main():
     tb.start()    # Start executing the flow graph (runs in separate threads)
 
     mac.main_loop(options.packets)    # don't expect this to return...
+    
+    #do stuff with the mac measurement results
+    print "this node sent ", mac.sent, " packets"
+    print "this node rcvd ", mac.rcvd, " packets"
+    print "this node rcvd ", mac.rcvd_ok, " packets correctly"
 	
     tb.stop()     # but if it does, tell flow graph to stop.
     tb.wait()     # wait for it to finish

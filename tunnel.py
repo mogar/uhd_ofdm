@@ -48,7 +48,7 @@ import os
 # from current dir
 from transmit_path import transmit_path
 from receive_path import receive_path
-import fusb_options
+#import fusb_options
 
 #print os.getpid()
 #raw_input('Attach and press enter')
@@ -91,14 +91,9 @@ class usrp_graph(gr.top_block):
         gr.top_block.__init__(self)
 
         self._tx_freq            = options.tx_freq         # tranmitter's center frequency
-        self._tx_subdev_spec     = options.tx_subdev_spec  # daughterboard to use
-        self._interp             = options.interp          # interpolating rate for the USRP (prelim)
+        self._rate               = options.rate          # interpolating rate for the USRP (prelim)
         self._rx_freq            = options.rx_freq         # receiver's center frequency
         self._rx_gain            = options.rx_gain         # receiver's gain
-        self._rx_subdev_spec     = options.rx_subdev_spec  # daughterboard to use
-        self._decim              = options.decim           # Decimating rate for the USRP (prelim)
-        self._fusb_block_size    = options.fusb_block_size # usb info for USRP
-        self._fusb_nblocks       = options.fusb_nblocks    # usb info for USRP
 
         if self._tx_freq is None:
             sys.stderr.write("-f FREQ or --freq FREQ or --tx-freq FREQ must be specified\n")
@@ -138,37 +133,32 @@ class usrp_graph(gr.top_block):
         Creates a USRP sink, determines the settings for best bitrate,
         and attaches to the transmitter's subdevice.
         """
-        self.u_snk = usrp.sink_c(fusb_block_size=self._fusb_block_size,
-                                 fusb_nblocks=self._fusb_nblocks)
+        self.u = uhd.usrp_sink(
+            device_addr = "",
+            io_type=uhd.io_type.COMPLEX_FLOAT32,
+			num_channels=1,
+		)
 
-        self.u_snk.set_interp_rate(self._interp)
+        self.u.set_samp_rate(self._rate)
 
-        # determine the daughterboard subdevice we're using
-        if self._tx_subdev_spec is None:
-            self._tx_subdev_spec = usrp.pick_tx_subdevice(self.u_snk)
-        self.u_snk.set_mux(usrp.determine_tx_mux_value(self.u_snk, self._tx_subdev_spec))
-        self.subdev = usrp.selected_subdev(self.u_snk, self._tx_subdev_spec)
+        # Set center frequency of USRP
+        ok = self.set_freq(self._tx_freq)
 
         # Set the USRP for maximum transmit gain
-        # (Note that on the RFX cards this is a nop.)
-        self.set_gain(self.subdev.gain_range()[1])
-
-        # enable Auto Transmit/Receive switching
-        self.set_auto_tr(True)
+        # (Note that on the RFX cards this is a nop
+        gain = self.u.get_gain_range()
+        #set the gain to the midpoint if it's currently out of bounds
+        if self.gain > gain.stop() or self.gain < gain.start():
+        	self.gain = (gain.stop() + gain.start()) / 2
+        self.set_gain(self.gain)
 
     def _setup_usrp_source(self):
-        self.u_src = usrp.source_c (fusb_block_size=self._fusb_block_size,
-                                fusb_nblocks=self._fusb_nblocks)
-        adc_rate = self.u_src.adc_rate()
-
-        self.u_src.set_decim_rate(self._decim)
-
-        # determine the daughterboard subdevice we're using
-        if self._rx_subdev_spec is None:
-            self._rx_subdev_spec = usrp.pick_rx_subdevice(self.u_src)
-        self.subdev = usrp.selected_subdev(self.u_src, self._rx_subdev_spec)
-
-        self.u_src.set_mux(usrp.determine_rx_mux_value(self.u_src, self._rx_subdev_spec))
+        self.u = uhd.usrp_source(
+            device_addr = "",
+            io_type=uhd.io_type.COMPLEX_FLOAT32,
+			num_channels=1,
+		)
+        self.u.set_samp_rate(self._rate)
 
     def set_freq(self, target_freq):
         """
@@ -182,8 +172,8 @@ class usrp_graph(gr.top_block):
         the result of that operation and our target_frequency to
         determine the value for the digital up converter.
         """
-        r_snk = self.u_snk.tune(self.subdev.which(), self.subdev, target_freq)
-        r_src = self.u_src.tune(self.subdev.which(), self.subdev, target_freq)
+        r_snk = self.u_snk.set_center_freq(target_freq)
+        r_src = self.u_src.set_center_freq(target_freq)
         if r_snk and r_src:
             return True
 
@@ -193,45 +183,26 @@ class usrp_graph(gr.top_block):
         """
         Sets the analog gain in the USRP
         """
-        self.gain = gain
-        self.subdev.set_gain(gain)
-
-    def set_auto_tr(self, enable):
-        """
-        Turns on auto transmit/receive of USRP daughterboard (if exits; else ignored)
-        """
-        return self.subdev.set_auto_tr(enable)
-        
-    def interp(self):
-        return self._interp
+        self.u.set_gain(gain)
 
     def add_options(normal, expert):
         """
         Adds usrp-specific options to the Options Parser
         """
         add_freq_option(normal)
-        normal.add_option("-T", "--tx-subdev-spec", type="subdev", default=None,
-                          help="select USRP Tx side A or B")
         normal.add_option("-v", "--verbose", action="store_true", default=False)
-
         expert.add_option("", "--tx-freq", type="eng_float", default=None,
                           help="set transmit frequency to FREQ [default=%default]", metavar="FREQ")
-        expert.add_option("-i", "--interp", type="intx", default=256,
-                          help="set fpga interpolation rate to INTERP [default=%default]")
-        normal.add_option("-R", "--rx-subdev-spec", type="subdev", default=None,
-                          help="select USRP Rx side A or B")
         normal.add_option("", "--rx-gain", type="eng_float", default=None, metavar="GAIN",
                           help="set receiver gain in dB [default=midpoint].  See also --show-rx-gain-range")
         normal.add_option("", "--show-rx-gain-range", action="store_true", default=False, 
                           help="print min and max Rx gain available on selected daughterboard")
-        normal.add_option("-v", "--verbose", action="store_true", default=False)
-
         expert.add_option("", "--rx-freq", type="eng_float", default=None,
                           help="set Rx frequency to FREQ [default=%default]", metavar="FREQ")
-        expert.add_option("-d", "--decim", type="intx", default=128,
-                          help="set fpga decimation rate to DECIM [default=%default]")
         expert.add_option("", "--snr", type="eng_float", default=30,
                           help="set the SNR of the channel in dB [default=%default]")
+        expert.add_option("-r", "--rate", type="eng_float", default=1e6,
+                          help="set fpga sample rate to RATE [default=%default]")
    
     # Make a static method to call before instantiation
     add_options = staticmethod(add_options)
@@ -240,9 +211,7 @@ class usrp_graph(gr.top_block):
         """
         Prints information about the transmit path
         """
-        print "Using TX d'board %s"    % (self.subdev.side_and_name(),)
         print "modulation:      %s"    % (self._modulator_class.__name__)
-        print "interp:          %3d"   % (self._interp)
         print "Tx Frequency:    %s"    % (eng_notation.num_to_str(self._tx_freq))
         
 def add_freq_option(parser):
@@ -348,8 +317,6 @@ def main():
     blks2.ofdm_mod.add_options(parser, expert_grp)
     blks2.ofdm_demod.add_options(parser, expert_grp)
 
-    fusb_options.add_options(expert_grp)
-
     (options, args) = parser.parse_args ()
     if len(args) != 0:
         parser.print_help(sys.stderr)
@@ -371,20 +338,6 @@ def main():
         realtime = False
         print "Note: failed to enable realtime scheduling"
 
-
-    # If the user hasn't set the fusb_* parameters on the command line,
-    # pick some values that will reduce latency.
-
-    if options.fusb_block_size == 0 and options.fusb_nblocks == 0:
-        if realtime:                        # be more aggressive
-            options.fusb_block_size = gr.prefs().get_long('fusb', 'rt_block_size', 1024)
-            options.fusb_nblocks    = gr.prefs().get_long('fusb', 'rt_nblocks', 16)
-        else:
-            options.fusb_block_size = gr.prefs().get_long('fusb', 'block_size', 4096)
-            options.fusb_nblocks    = gr.prefs().get_long('fusb', 'nblocks', 16)
-    
-    #print "fusb_block_size =", options.fusb_block_size
-    #print "fusb_nblocks    =", options.fusb_nblocks
 
     # instantiate the MAC
     mac = cs_mac(tun_fd, verbose=True)
