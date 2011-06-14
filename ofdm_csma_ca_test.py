@@ -176,6 +176,9 @@ class usrp_graph(gr.top_block):
     	#updated 2011 May 27, MR
     	self.u_src = uhd.usrp_source(device_addr="", io_type=uhd.io_type.COMPLEX_FLOAT32,
     							 num_channels=1)
+    	self.u_src.set_antenna("TX/RX", 0)
+    	print self.u_src.get_antenna()
+
     							 
     	self.u_src.set_subdev_spec("",0)
         #self.u_src = usrp.source_c (fusb_block_size=self._fusb_block_size,
@@ -184,7 +187,6 @@ class usrp_graph(gr.top_block):
 
         #self.u_src.set_decim_rate(self._decim)
         self.u_src.set_samp_rate(self._samp_rate)
-        self.u_src.set_antenna("TX/RX", 0)
         
         g = self.u_src.get_gain_range()
         #set the gain to the midpoint if it's currently out of bounds
@@ -343,10 +345,10 @@ class cs_mac(object):
         
         #delay time parameters
         #bus latency is also going to be a problem here
-        self.SIFS_time = .001#.000028 #seconds
-        self.DIFS_time = .004#.000128 #seconds
-        self.ctl_pkt_time = .001 #seconds. How long should this be?
-        self.backoff_time_unit = .001#.000078 #seconds
+        self.SIFS_time = .005#.000028 #seconds
+        self.DIFS_time = .020#.000128 #seconds
+        self.ctl_pkt_time = .02#seconds. How long should this be?
+        self.backoff_time_unit = .005#.000078 #seconds
         
         #measurement variables
         self.rcvd = 0
@@ -374,14 +376,15 @@ class cs_mac(object):
 
         if self.verbose:
             print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))
+            print payload
         if ok:
         	#question: is it possible that a packet sent from this function will 
         	#interfere with a packet sent from the main_loop function?
         	self.rcvd_ok += 1
-        	
+
         	#is this a ctl packet?
         	if payload == "ACK":
-        		self.ACK_rcvd == True
+        		self.ACK_rcvd = True
         	elif payload == "RTS":
         		#wait for SIFS
         		self.MAC_delay(self.SIFS_time)
@@ -390,13 +393,11 @@ class cs_mac(object):
         			self.tb.txpath.send_pkt("CTS")
         			self.sent += 1
         			#self.output_data_file.write("Sent: CTS\n")
-        		if self.verbose:
-        			print "received RTS"
         	elif payload == "CTS":
         		self.CTS_rcvd = True
-        	elif payload == "EOF":
-        		self.EOF_rcvd = True
         	else:
+        		if payload == "EOF":
+        			self.EOF_rcvd = True
 	        	#wait for SIFS
 	        	self.MAC_delay(self.SIFS_time)
     	    	#send ACK
@@ -471,6 +472,8 @@ class cs_mac(object):
             
             #attempt to send the packet until we recieve an ACK or it's time to give up
             while not self.ACK_rcvd and packet_lifetime > packet_retries:
+            	if current_packet == num_packets -1:
+            		payload = "EOF"
             	#do the backoff now
             	if backoff_now:
             		backoff_now = False
@@ -510,17 +513,15 @@ class cs_mac(object):
             	else: #wait for random backoff time
             		backoff_now = True
             #end while, packet sent or dropped
-            	
             
             #report packet loss
             if packet_lifetime == packet_retries:
             	#self.output_data_file.write("Failed to send packet")
             	pass
+            else:
+            	current_packet = current_packet + 1
             	
             #make sure that any recieved ACKs don't get confused with the next packet
-            if self.ACK_rcvd:
-            	current_packet = current_packet + 1
-
             self.ACK_rcvd = False
 
         while not self.EOF_rcvd:
@@ -591,7 +592,7 @@ def main():
     #print "fusb_nblocks    =", options.fusb_nblocks
 
     # instantiate the MAC
-    mac = cs_mac(verbose=True)
+    mac = cs_mac(options.verbose)
 
 
     # build the graph (PHY)
