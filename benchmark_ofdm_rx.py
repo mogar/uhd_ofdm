@@ -38,7 +38,6 @@ class my_top_block(gr.top_block):
 
         self._rx_freq            = options.rx_freq         # receiver's center frequency
         self._rx_gain            = options.rx_gain         # receiver's gain
-        self._rx_subdev_spec     = options.rx_subdev_spec  # daughterboard to use
         self._rate               = options.rate            # USRP sample rate
         self._snr                 = options.snr
 

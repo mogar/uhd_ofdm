@@ -38,7 +38,6 @@ class my_top_block(gr.top_block):
         gr.top_block.__init__(self)
 
         self._tx_freq            = options.tx_freq         # tranmitter's center frequency
-        self._tx_subdev_spec     = options.tx_subdev_spec  # daughterboard to use
         self._rate               = options.rate            # USRP sample rate
         self.gain				 = options.gain			   # USRP gain
 
