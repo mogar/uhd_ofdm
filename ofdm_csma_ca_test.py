@@ -617,8 +617,8 @@ def main():
 
     tb.start()    # Start executing the flow graph (runs in separate threads)
 
-    #mac.main_loop(options.packets)    # don't expect this to return...
-    time.sleep(240)
+    mac.main_loop(options.packets)    # don't expect this to return...
+    #time.sleep(240)
     
     #do stuff with the mac measurement results
     print "this node sent ", mac.sent, " packets"
