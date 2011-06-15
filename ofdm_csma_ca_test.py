@@ -40,6 +40,7 @@ from gnuradio import uhd
 from gnuradio import eng_notation
 from gnuradio.eng_option import eng_option
 from optparse import OptionParser
+from grc_gnuradio import blks2 as grc_blks2
 
 import random
 import time
@@ -130,9 +131,10 @@ class usrp_graph(gr.top_block):
 
         self.txpath = transmit_path(options)
         self.rxpath = receive_path(callback, options)
+        self.rx_valve = grc_blks2.valve(gr.sizeof_gr_complex, False)
 
         self.connect(self.txpath, self.u_snk)
-        self.connect(self.u_src, self.rxpath)
+        self.connect(self.u_src, self.rx_valve, self.rxpath)
 
     def carrier_sensed(self):
         """
@@ -385,7 +387,9 @@ class cs_mac(object):
         		self.MAC_delay(self.SIFS_time)
         		#only send the CTS signal if noone else is transmitting
         		if not self.tb.carrier_sensed():
+        			self.tb.rx_valve.set_open(True)
         			self.tb.txpath.send_pkt("CTS")
+        			self.tb.rx_valve.set_open(False)
         			self.sent += 1
         			#self.output_data_file.write("Sent: CTS\n")
         	elif payload == "CTS":
@@ -398,7 +402,9 @@ class cs_mac(object):
     	    	#send ACK
     	    	#currently not affixing ACKS to other packets that are being sent
     	    	#this will probably cause latency issues
+    			self.tb.rx_valve.set_open(True)
         		self.tb.txpath.send_pkt("ACK")
+        		self.tb.rx_valve.set_open(False)
         		self.sent += 1
         		#self.output_data_file.write("Sent: ACK\n")
         		#self.rcvd_packets_file.write(payload + "\n")
@@ -435,6 +441,11 @@ class cs_mac(object):
 
         FIXME: may want to check for EINTR and EAGAIN and reissue read
         """
+        while 1:
+            self.tb.rx_valve.set_open(True)
+            self.tb.txpath.send_pkt("RTS")
+            self.tb.rx_valve.set_open(False)
+        	
         current_packet = 0
         while current_packet < num_packets:
             payload = time.strftime('%y%m%d_%H%M%S') + ", this is packet number " + str(current_packet)
@@ -478,14 +489,18 @@ class cs_mac(object):
             				backoff_time = backoff_time - 1
             	
             	if not self.tb.carrier_sensed():
+            		self.tb.rx_valve.set_open(True)
             		self.tb.txpath.send_pkt("RTS")
+            		self.tb.rx_valve.set_open(False)
             		self.sent += 1
             		#self.output_data_file.write("Sent: RTS\n")
             		self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             		if self.CTS_rcvd: 
             			self.MAC_delay(self.SIFS_time)
             			self.CTS_rcvd = False
+            			self.tb.rx_valve.set_open(True)
             			self.tb.txpath.send_pkt(payload)
+            			self.tb.rx_valve.set_open(False)
             			#self.output_data_file.write("Sent: data\n")
             			#wait for SIFS + ACK packet time
             			self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
