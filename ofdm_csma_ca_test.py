@@ -322,10 +322,6 @@ class cs_mac(object):
     """
     def __init__(self, verbose=False):
     	#updated by Morgan Redfield on 2011 May 16
-    	#question: Do we need to implement address checking in the MAC?
-    	#I haven't found any other location for node addresses.
-    	#Also there are no MAC headers, and probably no PHY headers
-    	#there probably isn't a node address at this point
         self.verbose = verbose
         self.tb = None             # top block (access to PHY)
         
@@ -343,10 +339,10 @@ class cs_mac(object):
         
         #delay time parameters
         #bus latency is also going to be a problem here
-        self.SIFS_time = .001#.000028 #seconds
-        self.DIFS_time = .020#.000128 #seconds
-        self.ctl_pkt_time = .02#seconds. How long should this be?
-        self.backoff_time_unit = .03#.000078 #seconds
+        self.SIFS_time = .01#.000028 #seconds
+        self.DIFS_time = .10#.000128 #seconds
+        self.ctl_pkt_time = .1#seconds. How long should this be?
+        self.backoff_time_unit = .1#.000078 #seconds
         
         #measurement variables
         self.rcvd = 0
@@ -374,11 +370,12 @@ class cs_mac(object):
 
         if self.verbose:
             print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))
-            print payload
         if ok:
         	#question: is it possible that a packet sent from this function will 
         	#interfere with a packet sent from the main_loop function?
         	self.rcvd_ok += 1
+        	if self.verbose:
+        		print payload
 
         	#is this a ctl packet?
         	if payload == "ACK":
@@ -481,16 +478,12 @@ class cs_mac(object):
             				backoff_time = backoff_time - 1
             	
             	if not self.tb.carrier_sensed():
-            		#send RTS
             		self.tb.txpath.send_pkt("RTS")
             		self.sent += 1
             		#self.output_data_file.write("Sent: RTS\n")
-            		#wait for SIFS + CTS packet time
             		self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             		if self.CTS_rcvd: 
-            			#wait again for SIFS
             			self.MAC_delay(self.SIFS_time)
-            			#reset CTS_rcvd
             			self.CTS_rcvd = False
             			self.tb.txpath.send_pkt(payload)
             			#self.output_data_file.write("Sent: data\n")
