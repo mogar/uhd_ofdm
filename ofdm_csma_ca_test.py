@@ -346,7 +346,7 @@ class cs_mac(object):
         self.SIFS_time = .005#.000028 #seconds
         self.DIFS_time = .020#.000128 #seconds
         self.ctl_pkt_time = .02#seconds. How long should this be?
-        self.backoff_time_unit = .01#.000078 #seconds
+        self.backoff_time_unit = .03#.000078 #seconds
         
         #measurement variables
         self.rcvd = 0
@@ -461,10 +461,7 @@ class cs_mac(object):
             #contention in this test. It seems like we'll be able to transmit the packet in only
             #a couple of tries
             
-            #The frame has now been assembled, proceed to CSMA/CA algorithm
-            #notes: no NAV is implemented
-            #MAC frame is non-standard. It does not have proper headers.
-            #there's no MAC level queue for packets right now
+            #The frame has no level queue for packets right now
             
             #TODO: compute minimum quiet period
             
