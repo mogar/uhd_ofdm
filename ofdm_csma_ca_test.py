@@ -177,8 +177,6 @@ class usrp_graph(gr.top_block):
     	self.u_src = uhd.usrp_source(device_addr="", io_type=uhd.io_type.COMPLEX_FLOAT32,
     							 num_channels=1)
     	self.u_src.set_antenna("TX/RX", 0)
-    	print self.u_src.get_antenna()
-
     							 
     	self.u_src.set_subdev_spec("",0)
         #self.u_src = usrp.source_c (fusb_block_size=self._fusb_block_size,
@@ -348,7 +346,7 @@ class cs_mac(object):
         self.SIFS_time = .005#.000028 #seconds
         self.DIFS_time = .020#.000128 #seconds
         self.ctl_pkt_time = .02#seconds. How long should this be?
-        self.backoff_time_unit = .005#.000078 #seconds
+        self.backoff_time_unit = .01#.000078 #seconds
         
         #measurement variables
         self.rcvd = 0
@@ -450,8 +448,8 @@ class cs_mac(object):
             #    self.tb.txpath.send_pkt(eof=True)
             #    break
 
-            if self.verbose:
-                print "Tx: len(payload) = %4d" % (len(payload),)
+            #if self.verbose:
+            #    print "Tx: len(payload) = %4d" % (len(payload),)
             
             #set up bookkeeping variables for CSMA/CA
             backoff_now = True
