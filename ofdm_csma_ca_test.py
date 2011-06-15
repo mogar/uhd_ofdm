@@ -343,7 +343,7 @@ class cs_mac(object):
         
         #delay time parameters
         #bus latency is also going to be a problem here
-        self.SIFS_time = .005#.000028 #seconds
+        self.SIFS_time = .001#.000028 #seconds
         self.DIFS_time = .020#.000128 #seconds
         self.ctl_pkt_time = .02#seconds. How long should this be?
         self.backoff_time_unit = .03#.000078 #seconds
@@ -444,12 +444,8 @@ class cs_mac(object):
             #self.output_data_file.write(payload)
             #self.output_data_file.write("\n")
             
-            #if not payload:
-            #    self.tb.txpath.send_pkt(eof=True)
-            #    break
-
-            #if self.verbose:
-            #    print "Tx: len(payload) = %4d" % (len(payload),)
+            if self.verbose:
+            	print "Tx: len(payload)=", len(payload)
             
             #set up bookkeeping variables for CSMA/CA
             backoff_now = True
@@ -460,15 +456,13 @@ class cs_mac(object):
             #I set packet_lifetime pretty low because I don't think that we'll see a lot of
             #contention in this test. It seems like we'll be able to transmit the packet in only
             #a couple of tries
-            
-            #The frame has no level queue for packets right now
-            
+                        
             #TODO: compute minimum quiet period
             
             #attempt to send the packet until we recieve an ACK or it's time to give up
             while not self.ACK_rcvd and packet_lifetime > packet_retries:
             	if current_packet == num_packets -1:
-            		payload = "EOF"
+            		payload = "EOF" #send the EOF for our last packet
             	#do the backoff now
             	if backoff_now:
             		backoff_now = False
@@ -480,7 +474,8 @@ class cs_mac(object):
 	            		packet_retries = packet_retries + 1
             		#do the actual waiting
             		while backoff_time != 0:
-            			self.DIFS()
+            			while not self.DIFS():
+            				pass #self.DIFS() returns false if the carrier is sensed active
             			while not self.tb.carrier_sensed() and backoff_time > 0:
             				self.MAC_delay(self.backoff_time_unit)
             				backoff_time = backoff_time - 1
@@ -503,9 +498,9 @@ class cs_mac(object):
             			self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             			self.sent += 1
             			#ACK should be true now, so the loop will exit
-            		else: #otherwise we should backoff, right?
+            		else: #we're not clear to send, so wait again
             			backoff_now = True
-            	else: #wait for random backoff time
+            	else: #the spectrum's busy, so wait again
             		backoff_now = True
             #end while, packet sent or dropped
             
@@ -622,7 +617,8 @@ def main():
 
     tb.start()    # Start executing the flow graph (runs in separate threads)
 
-    mac.main_loop(options.packets)    # don't expect this to return...
+    #mac.main_loop(options.packets)    # don't expect this to return...
+    time.sleep(240)
     
     #do stuff with the mac measurement results
     print "this node sent ", mac.sent, " packets"
