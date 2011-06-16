@@ -331,30 +331,20 @@ class cs_mac(object):
         self.CTS_rcvd = False
         self.ACK_rcvd = False
         self.EOF_rcvd = False
-        
-        #data file to store measurements
-        #filename = "CDMA_CA_experiment_" + time.strftime('%y%m%d_%H%M%S') + ".txt"
-        #self.output_data_file = open(filename, 'w')
-        
-        #filename = "rcvd_packets_" + time.strftime('%y%m%d_%H%M%S') + ".txt"
-        #self.rcvd_packets_file = open(filename, 'w')
+        self.RTS_rcvd = False
         
         #delay time parameters
         #bus latency is also going to be a problem here
-        self.SIFS_time = .01#.000028 #seconds
-        self.DIFS_time = .10#.000128 #seconds
-        self.ctl_pkt_time = .1#seconds. How long should this be?
-        self.backoff_time_unit = .1#.000078 #seconds
+        self.SIFS_time = .005#.000028 #seconds
+        self.DIFS_time = .01#.000128 #seconds
+        self.ctl_pkt_time = .01#seconds. How long should this be?
+        self.rnd_trip_time = .1
+        self.backoff_time_unit = .01#.000078 #seconds
         
         #measurement variables
         self.rcvd = 0
         self.rcvd_ok = 0
         self.sent = 0
-    
-    def __del__(self):
-    	#self.output_data_file.close()
-    	#self.rcvd_packets_file.close()
-    	pass
 
     def set_flow_graph(self, tb):
         self.tb = tb
@@ -367,7 +357,6 @@ class cs_mac(object):
         @param ok: bool indicating whether payload CRC was OK
         @param payload: contents of the packet (string)
         """
-        #self.output_data_file.write("RCVD: %r\n" % ok)
         self.rcvd += 1
 
         if self.verbose:
@@ -382,8 +371,10 @@ class cs_mac(object):
         	#is this a ctl packet?
         	if payload == "ACK":
         		self.ACK_rcvd = True
+        		self.RTS_rcvd = False
         	elif payload == "RTS":
         		#wait for SIFS
+        		self.RTS_rcvd = True
         		self.MAC_delay(self.SIFS_time)
         		#only send the CTS signal if noone else is transmitting
         		if not self.tb.carrier_sensed():
@@ -391,7 +382,6 @@ class cs_mac(object):
         			self.tb.txpath.send_pkt("CTS")
         			self.tb.rx_valve.set_open(False)
         			self.sent += 1
-        			#self.output_data_file.write("Sent: CTS\n")
         	elif payload == "CTS":
         		self.CTS_rcvd = True
         	else:
@@ -406,8 +396,6 @@ class cs_mac(object):
         		self.tb.txpath.send_pkt("ACK")
         		self.tb.rx_valve.set_open(False)
         		self.sent += 1
-        		#self.output_data_file.write("Sent: ACK\n")
-        		#self.rcvd_packets_file.write(payload + "\n")
 	
     def DIFS(self):
     	#added by Morgan Redfield 2011 May 16
@@ -431,7 +419,6 @@ class cs_mac(object):
     		pass
     		
     def main_loop(self, num_packets):
-    	#updated by Morgan Redfield on 2011 May 16
         """
         Main loop for MAC. This loop will generate and send num_packets worth of packets.
         It will then send an eof packet. The loop will exit when it has both sent and received
@@ -441,18 +428,22 @@ class cs_mac(object):
 
         FIXME: may want to check for EINTR and EAGAIN and reissue read
         """
-        while 1:
-            self.tb.rx_valve.set_open(True)
-            self.tb.txpath.send_pkt("RTS")
-            self.tb.rx_valve.set_open(False)
-        	
+        #updated by Morgan Redfield on 2011 May 16
+
+        done = False
         current_packet = 0
-        while current_packet < num_packets:
-            payload = time.strftime('%y%m%d_%H%M%S') + ", this is packet number " + str(current_packet)
-            #self.output_data_file.write(payload)
-            #self.output_data_file.write("\n")
+        while not done:
+            payload = None
             
-            if self.verbose:
+            if current_packet < num_packets:
+            	current_packet += 1
+            	payload = time.strftime('%y%m%d_%H%M%S') + ", this is packet number " + str(current_packet)
+            else:
+            	payload = "EOF"
+            	done = True
+            
+            if self.verbose and payload:
+            	print "packet: ", current_packet
             	print "Tx: len(payload)=", len(payload)
             
             #set up bookkeeping variables for CSMA/CA
@@ -464,22 +455,17 @@ class cs_mac(object):
             #I set packet_lifetime pretty low because I don't think that we'll see a lot of
             #contention in this test. It seems like we'll be able to transmit the packet in only
             #a couple of tries
-                        
-            #TODO: compute minimum quiet period
-            
+                                    
             #attempt to send the packet until we recieve an ACK or it's time to give up
-            while not self.ACK_rcvd and packet_lifetime > packet_retries:
-            	if current_packet == num_packets -1:
-            		payload = "EOF" #send the EOF for our last packet
-            	#do the backoff now
+            while payload and not self.ACK_rcvd and packet_lifetime > packet_retries:
+            	#do the backoff
             	if backoff_now:
             		backoff_now = False
             		#choose a random backoff time
             		backoff_time = random.randrange(0, 2**packet_retries * CWmin, 1)
             		#increment the packet_retries now that we've used it
             		#the next time we back off should have a longer delay time
-            		if packet_retries < packet_lifetime: #make sure you don't extend the delay too far
-	            		packet_retries = packet_retries + 1
+	            	packet_retries += 1
             		#do the actual waiting
             		while backoff_time != 0:
             			while not self.DIFS():
@@ -488,12 +474,19 @@ class cs_mac(object):
             				self.MAC_delay(self.backoff_time_unit)
             				backoff_time = backoff_time - 1
             	
-            	if not self.tb.carrier_sensed():
+            	#done with backoff, now try sending data
+            	if self.RTS_rcvd:
+            		#if we expect to rcv data and ack packets, don't transmitting
+            		start_delay = time.clock()
+    	    		while time.clock() - start_delay < self.rnd_trip_time:
+    	    			if not self.RTS_rcvd:
+    	    				start_delay = 0
+    	    		self.RTS_rcvd = False
+            	elif not self.tb.carrier_sensed(): #the spectrum isn't busy or expected to be busy
             		self.tb.rx_valve.set_open(True)
             		self.tb.txpath.send_pkt("RTS")
             		self.tb.rx_valve.set_open(False)
             		self.sent += 1
-            		#self.output_data_file.write("Sent: RTS\n")
             		self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             		if self.CTS_rcvd: 
             			self.MAC_delay(self.SIFS_time)
@@ -501,7 +494,6 @@ class cs_mac(object):
             			self.tb.rx_valve.set_open(True)
             			self.tb.txpath.send_pkt(payload)
             			self.tb.rx_valve.set_open(False)
-            			#self.output_data_file.write("Sent: data\n")
             			#wait for SIFS + ACK packet time
             			self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             			self.sent += 1
@@ -513,10 +505,7 @@ class cs_mac(object):
             #end while, packet sent or dropped
             
             #report packet loss
-            if packet_lifetime == packet_retries:
-            	#self.output_data_file.write("Failed to send packet")
-            	pass
-            else:
+            if packet_lifetime < packet_retries:
             	current_packet = current_packet + 1
             	
             #make sure that any recieved ACKs don't get confused with the next packet
