@@ -40,7 +40,6 @@ from gnuradio import uhd
 from gnuradio import eng_notation
 from gnuradio.eng_option import eng_option
 from optparse import OptionParser
-from grc_gnuradio import blks2 as grc_blks2
 
 import random
 import time
@@ -131,7 +130,7 @@ class usrp_graph(gr.top_block):
 
         self.txpath = transmit_path(options)
         self.rxpath = receive_path(callback, options)
-        self.rx_valve = grc_blks2.valve(gr.sizeof_gr_complex, False)
+        self.rx_valve = gr.copy(gr.sizeof_gr_complex)
 
         self.connect(self.txpath, self.u_snk)
         self.connect(self.u_src, self.rx_valve, self.rxpath)
@@ -378,9 +377,9 @@ class cs_mac(object):
         		self.MAC_delay(self.SIFS_time)
         		#only send the CTS signal if noone else is transmitting
         		if not self.tb.carrier_sensed():
-        			self.tb.rx_valve.set_open(True)
+        			self.tb.rx_valve.set_enabled(False)
         			self.tb.txpath.send_pkt("CTS")
-        			self.tb.rx_valve.set_open(False)
+        			self.tb.rx_valve.set_enabled(True)
         			self.sent += 1
         	elif payload == "CTS":
         		self.CTS_rcvd = True
@@ -392,9 +391,9 @@ class cs_mac(object):
     	    	#send ACK
     	    	#currently not affixing ACKS to other packets that are being sent
     	    	#this will probably cause latency issues
-    			self.tb.rx_valve.set_open(True)
+    			self.tb.rx_valve.set_enabled(False)
         		self.tb.txpath.send_pkt("ACK")
-        		self.tb.rx_valve.set_open(False)
+        		self.tb.rx_valve.set_enabled(True)
         		self.sent += 1
 	
     def DIFS(self):
@@ -483,17 +482,17 @@ class cs_mac(object):
     	    				start_delay = 0
     	    		self.RTS_rcvd = False
             	elif not self.tb.carrier_sensed(): #the spectrum isn't busy or expected to be busy
-            		self.tb.rx_valve.set_open(True)
+            		self.tb.rx_valve.set_enabled(False)
             		self.tb.txpath.send_pkt("RTS")
-            		self.tb.rx_valve.set_open(False)
+            		self.tb.rx_valve.set_enabled(True)
             		self.sent += 1
             		self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             		if self.CTS_rcvd: 
             			self.MAC_delay(self.SIFS_time)
             			self.CTS_rcvd = False
-            			self.tb.rx_valve.set_open(True)
+            			self.tb.rx_valve.set_enabled(False)
             			self.tb.txpath.send_pkt(payload)
-            			self.tb.rx_valve.set_open(False)
+            			self.tb.rx_valve.set_enabled(True)
             			#wait for SIFS + ACK packet time
             			self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             			self.sent += 1

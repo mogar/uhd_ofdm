@@ -184,7 +184,7 @@ def main():
     pkt_size = int(options.size)
 
     while n < nbytes:
-        #update pktno % 65535 to account for sending very large amounts of data
+        #pktno % 65535 to account for sending very large amounts of data
         send_pkt(struct.pack('!H', pktno % 65535) + (pkt_size - 2) * chr(pktno & 0xff))
         n += pkt_size
         sys.stderr.write('.')
