@@ -94,6 +94,7 @@ class usrp_graph(gr.top_block):
         self._rate               = options.rate          # interpolating rate for the USRP (prelim)
         self._rx_freq            = options.rx_freq         # receiver's center frequency
         self._rx_gain            = options.rx_gain         # receiver's gain
+        self._tx_gain            = options.tx_gain
 
         if self._tx_freq is None:
             sys.stderr.write("-f FREQ or --freq FREQ or --tx-freq FREQ must be specified\n")
@@ -146,9 +147,9 @@ class usrp_graph(gr.top_block):
         # (Note that on the RFX cards this is a nop
         gain = self.u_snk.get_gain_range()
         #set the gain to the midpoint if it's currently out of bounds
-        if self.gain > gain.stop() or self.gain < gain.start():
-        	self.gain = (gain.stop() + gain.start()) / 2
-        self.set_gain(self.gain)
+        if self._tx_gain > gain.stop() or self._tx_gain < gain.start():
+        	self._tx_gain = (gain.stop() + gain.start()) / 2
+        self.set_gain(self._tx_gain)
 
     def _setup_usrp_source(self):
         self.u_src = uhd.usrp_source(
@@ -195,6 +196,8 @@ class usrp_graph(gr.top_block):
                           help="set transmit frequency to FREQ [default=%default]", metavar="FREQ")
         normal.add_option("", "--rx-gain", type="eng_float", default=None, metavar="GAIN",
                           help="set receiver gain in dB [default=midpoint].  See also --show-rx-gain-range")
+        normal.add_option("", "--tx-gain", type="eng_float", default=11.5, metavar="GAIN",
+                          help="set transmitter gain in dB [default=%default].  See also --show-tx-gain-range")
         normal.add_option("", "--show-rx-gain-range", action="store_true", default=False, 
                           help="print min and max Rx gain available on selected daughterboard")
         expert.add_option("", "--rx-freq", type="eng_float", default=None,
