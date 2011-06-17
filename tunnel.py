@@ -133,32 +133,33 @@ class usrp_graph(gr.top_block):
         Creates a USRP sink, determines the settings for best bitrate,
         and attaches to the transmitter's subdevice.
         """
-        self.u = uhd.usrp_sink(
+        self.u_snk = uhd.usrp_sink(
             device_addr = "",
             io_type=uhd.io_type.COMPLEX_FLOAT32,
 			num_channels=1,
 		)
-
-        self.u.set_samp_rate(self._rate)
+		
+		
+        self.u_snk.set_samp_rate(self._rate)
 
         # Set center frequency of USRP
         ok = self.set_freq(self._tx_freq)
 
         # Set the USRP for maximum transmit gain
         # (Note that on the RFX cards this is a nop
-        gain = self.u.get_gain_range()
+        gain = self.u_snk.get_gain_range()
         #set the gain to the midpoint if it's currently out of bounds
         if self.gain > gain.stop() or self.gain < gain.start():
         	self.gain = (gain.stop() + gain.start()) / 2
         self.set_gain(self.gain)
 
     def _setup_usrp_source(self):
-        self.u = uhd.usrp_source(
+        self.u_src = uhd.usrp_source(
             device_addr = "",
             io_type=uhd.io_type.COMPLEX_FLOAT32,
 			num_channels=1,
 		)
-        self.u.set_samp_rate(self._rate)
+        self.u_src.set_samp_rate(self._rate)
         self.u_src.set_antenna("TX/RX", 0)
 
 
@@ -185,7 +186,7 @@ class usrp_graph(gr.top_block):
         """
         Sets the analog gain in the USRP
         """
-        self.u.set_gain(gain)
+        self.u_snk.set_gain(gain)
 
     def add_options(normal, expert):
         """
