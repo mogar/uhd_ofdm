@@ -33,8 +33,8 @@
 # /////////////////////////////////////////////////////////////////////////////
 
 
-from gnuradio import gr, gru, blks2
-from gnuradio import usrp
+from gnuradio import gr, gru, blks2, uhd
+#from gnuradio import usrp
 from gnuradio import eng_notation
 from gnuradio.eng_option import eng_option
 from optparse import OptionParser
