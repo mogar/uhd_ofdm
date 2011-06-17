@@ -142,9 +142,6 @@ class usrp_graph(gr.top_block):
 		
         self.u_snk.set_samp_rate(self._rate)
 
-        # Set center frequency of USRP
-        ok = self.set_freq(self._tx_freq)
-
         # Set the USRP for maximum transmit gain
         # (Note that on the RFX cards this is a nop
         gain = self.u_snk.get_gain_range()
