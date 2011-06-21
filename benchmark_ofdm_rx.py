@@ -128,6 +128,7 @@ class my_top_block(gr.top_block):
         print "Rx Frequency:    %s"    % (eng_notation.num_to_str(self._rx_freq))
         print "Rx Gain:         %s"    % (self._rx_gain)
         print "SNR:             %s"    % (self._snr)
+        print "Antenna:         %s"    % (self.u.get_antenna())
 
 def add_freq_option(parser):
     """
