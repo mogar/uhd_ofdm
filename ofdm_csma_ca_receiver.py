@@ -271,6 +271,8 @@ def main():
     print "Carrier sense threshold:", options.carrier_threshold, "dB"
 
 
+    # I never start the MAC main loop. We just want to recieve
+    # run the flow graph and wait until the user stops it.
     try:
         tb.run()
     except KeyboardInterrupt:

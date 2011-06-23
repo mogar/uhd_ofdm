@@ -86,8 +86,8 @@ class cs_mac(object):
         if self.verbose:
             print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))
         if ok:
-        	sender = payload[-1]
-        	payload = payload[1:-1]
+        	sender = payload[1]
+        	payload = payload[2:]
         	#question: is it possible that a packet sent from this function will 
         	#interfere with a packet sent from the main_loop function?
         	self.rcvd_ok += 1
@@ -104,7 +104,7 @@ class cs_mac(object):
         		self.MAC_delay(self.SIFS_time)
         		#only send the CTS signal if noone else is transmitting
         		if not self.tb.carrier_sensed():
-        			self.tb.txpath.send_pkt(sender + "CTS" + self.address)
+        			self.tb.txpath.send_pkt(sender + self.address + "CTS")
         			self.sent += 1
         	elif payload == "CTS":
         		self.CTS_rcvd = True
@@ -117,7 +117,7 @@ class cs_mac(object):
     	    	#send ACK
     	    	#currently not affixing ACKS to other packets that are being sent
     	    	#this will probably cause latency issues
-        		self.tb.txpath.send_pkt(sender + "ACK" + self.address)
+        		self.tb.txpath.send_pkt(sender + self.address + "ACK")
         		self.RTS_rcvd = False
         		self.sent += 1
 	
@@ -154,6 +154,8 @@ class cs_mac(object):
         current_packet = 0
         while not done:
             payload = None
+            #the following is for TUN
+            #payload = os.read(self.tun_fd, 10*1024)
             
             if current_packet < num_packets:
             	current_packet += 1
@@ -200,13 +202,13 @@ class cs_mac(object):
     	    				start_delay = 0
     	    		self.RTS_rcvd = False
             	elif not self.tb.carrier_sensed(): #the spectrum isn't busy or expected to be busy
-            		self.tb.txpath.send_pkt('x' + "RTS" + self.address)
+            		self.tb.txpath.send_pkt('x' + self.address + "RTS")
             		self.sent += 1
             		self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             		if self.CTS_rcvd: 
             			self.MAC_delay(self.SIFS_time)
             			self.CTS_rcvd = False
-            			self.tb.txpath.send_pkt('x' + payload + self.address)
+            			self.tb.txpath.send_pkt('x' + self.address + payload)
             			#wait for SIFS + ACK packet time
             			self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             			self.sent += 1
