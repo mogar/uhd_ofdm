@@ -358,11 +358,14 @@ class cs_mac(object):
         @param ok: bool indicating whether payload CRC was OK
         @param payload: contents of the packet (string)
         """
+        if payload[0] == self.address:
+        	return
+        	
         self.rcvd += 1
 
         if self.verbose:
             print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))
-        if ok and payload[0] != self.address:
+        if ok:
         	payload = payload[1:]
         	#question: is it possible that a packet sent from this function will 
         	#interfere with a packet sent from the main_loop function?
@@ -588,6 +591,9 @@ def main():
     #        eng_notation.num_to_str(fg.txpath.bitrate()),
     #        eng_notation.num_to_str(fg.rxpath.bitrate()))
              
+    print
+    print "address:        %s"   % (options.address)
+    print
     print "modulation:     %s"   % (options.modulation,)
     print "freq:           %s"      % (eng_notation.num_to_str(options.tx_freq))
     #print "bitrate:        %sb/sec" % (eng_notation.num_to_str(fg.txpath.bitrate()),)
