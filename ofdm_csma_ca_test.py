@@ -321,7 +321,7 @@ class cs_mac(object):
     Of course, we're not restricted to getting packets via TUN/TAP, this
     is just an example.
     """
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, address = ""):
     	#updated by Morgan Redfield on 2011 May 16
         self.verbose = verbose
         self.tb = None             # top block (access to PHY)
@@ -331,6 +331,8 @@ class cs_mac(object):
         self.ACK_rcvd = False
         self.EOF_rcvd = False
         self.RTS_rcvd = False
+        
+        self.address = address
         
         #delay time parameters
         #bus latency is also going to be a problem here
@@ -360,7 +362,8 @@ class cs_mac(object):
 
         if self.verbose:
             print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))
-        if ok:
+        if ok and payload[0] != self.address:
+        	payload = payload[1:]
         	#question: is it possible that a packet sent from this function will 
         	#interfere with a packet sent from the main_loop function?
         	self.rcvd_ok += 1
@@ -377,10 +380,7 @@ class cs_mac(object):
         		self.MAC_delay(self.SIFS_time)
         		#only send the CTS signal if noone else is transmitting
         		if not self.tb.carrier_sensed():
-        			self.tb.rx_valve.set_enabled(False)
-        			self.tb.txpath.send_pkt("CTS")
-        			time.sleep(.001)
-        			self.tb.rx_valve.set_enabled(True)
+        			self.tb.txpath.send_pkt(self.address + "CTS")
         			self.sent += 1
         	elif payload == "CTS":
         		self.CTS_rcvd = True
@@ -392,10 +392,7 @@ class cs_mac(object):
     	    	#send ACK
     	    	#currently not affixing ACKS to other packets that are being sent
     	    	#this will probably cause latency issues
-    			self.tb.rx_valve.set_enabled(False)
-        		self.tb.txpath.send_pkt("ACK")
-        		time.sleep(.001)
-        		self.tb.rx_valve.set_enabled(True)
+        		self.tb.txpath.send_pkt(self.address + "ACK")
         		self.sent += 1
 	
     def DIFS(self):
@@ -484,19 +481,13 @@ class cs_mac(object):
     	    				start_delay = 0
     	    		self.RTS_rcvd = False
             	elif not self.tb.carrier_sensed(): #the spectrum isn't busy or expected to be busy
-            		self.tb.rx_valve.set_enabled(False)
-            		self.tb.txpath.send_pkt("RTS")
-            		time.sleep(.001)
-            		self.tb.rx_valve.set_enabled(True)
+            		self.tb.txpath.send_pkt(self.address + "RTS")
             		self.sent += 1
             		self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             		if self.CTS_rcvd: 
             			self.MAC_delay(self.SIFS_time)
             			self.CTS_rcvd = False
-            			self.tb.rx_valve.set_enabled(False)
-            			self.tb.txpath.send_pkt(payload)
-            			time.sleep(.001)
-            			self.tb.rx_valve.set_enabled(True)
+            			self.tb.txpath.send_pkt(self.address + payload)
             			#wait for SIFS + ACK packet time
             			self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             			self.sent += 1
@@ -514,9 +505,9 @@ class cs_mac(object):
             #make sure that any recieved ACKs don't get confused with the next packet
             self.ACK_rcvd = False
 
-        while not self.EOF_rcvd:
-        	#just hang out until the other node is done
-        	time.sleep(1)
+        #while not self.EOF_rcvd:
+        #	#just hang out until the other node is done
+        #	time.sleep(1)
 
 
 
@@ -535,6 +526,8 @@ def main():
     parser.add_option("-v","--verbose", action="store_true", default=False)
     parser.add_option("-p","--packets", type="int", default = 40, 
     					  help="set number of packets to send [default=%default]")
+    parser.add_option("", "--address", type="string", default = 'a',
+                          help="set the address of the node (addresses are a single char) [default=%default]")
     expert_grp.add_option("-c", "--carrier-threshold", type="eng_float", default=30,
                           help="set carrier detect threshold (dB) [default=%default]")
 
@@ -582,7 +575,7 @@ def main():
     #print "fusb_nblocks    =", options.fusb_nblocks
 
     # instantiate the MAC
-    mac = cs_mac(options.verbose)
+    mac = cs_mac(options.verbose, options.address)
 
 
     # build the graph (PHY)
@@ -628,8 +621,6 @@ def main():
     tb.stop()     # but if it does, tell flow graph to stop.
     tb.wait()     # wait for it to finish
     
-    mac.__del__()
-
 
 if __name__ == '__main__':
     try:
