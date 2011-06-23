@@ -65,10 +65,10 @@ from receive_path import receive_path
 # Linux specific...
 # TUNSETIFF ifr flags from <linux/tun_if.h>
 
-IFF_TUN		= 0x0001   # tunnel IP packets
-IFF_TAP		= 0x0002   # tunnel ethernet frames
-IFF_NO_PI	= 0x1000   # don't pass extra packet info
-IFF_ONE_QUEUE	= 0x2000   # beats me ;)
+IFF_TUN        = 0x0001   # tunnel IP packets
+IFF_TAP        = 0x0002   # tunnel ethernet frames
+IFF_NO_PI    = 0x1000   # don't pass extra packet info
+IFF_ONE_QUEUE    = 0x2000   # beats me ;)
 
 def open_tun_interface(tun_device_filename):
     from fcntl import ioctl
@@ -137,10 +137,10 @@ class usrp_graph(gr.top_block):
         self.u_snk = uhd.usrp_sink(
             device_addr = "",
             io_type=uhd.io_type.COMPLEX_FLOAT32,
-			num_channels=1,
-		)
-		
-		
+            num_channels=1,
+        )
+        
+        
         self.u_snk.set_samp_rate(self._rate)
 
         # Set the USRP for maximum transmit gain
@@ -148,15 +148,15 @@ class usrp_graph(gr.top_block):
         gain = self.u_snk.get_gain_range()
         #set the gain to the midpoint if it's currently out of bounds
         if self._tx_gain > gain.stop() or self._tx_gain < gain.start():
-        	self._tx_gain = (gain.stop() + gain.start()) / 2
+            self._tx_gain = (gain.stop() + gain.start()) / 2
         self.set_gain(self._tx_gain)
 
     def _setup_usrp_source(self):
         self.u_src = uhd.usrp_source(
             device_addr = "",
             io_type=uhd.io_type.COMPLEX_FLOAT32,
-			num_channels=1,
-		)
+            num_channels=1,
+        )
         self.u_src.set_samp_rate(self._rate)
         self.u_src.set_antenna("TX/RX", 0)
 

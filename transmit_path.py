@@ -36,9 +36,9 @@ class transmit_path(gr.hier_block2):
         See below for what options should hold
         '''
 
-	gr.hier_block2.__init__(self, "transmit_path",
-				gr.io_signature(0, 0, 0), # Input signature
-				gr.io_signature(1, 1, gr.sizeof_gr_complex)) # Output signature
+        gr.hier_block2.__init__(self, "transmit_path",
+                gr.io_signature(0, 0, 0), # Input signature
+                gr.io_signature(1, 1, gr.sizeof_gr_complex)) # Output signature
 
         options = copy.copy(options)    # make a copy so we can destructively modify
 

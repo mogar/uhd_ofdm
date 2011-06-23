@@ -39,7 +39,7 @@ class my_top_block(gr.top_block):
 
         self._tx_freq            = options.tx_freq         # tranmitter's center frequency
         self._rate               = options.rate            # USRP sample rate
-        self.gain				 = options.gain			   # USRP gain
+        self.gain                 = options.gain               # USRP gain
 
         if self._tx_freq is None:
             sys.stderr.write("-f FREQ or --freq FREQ or --tx-freq FREQ must be specified\n")
@@ -57,7 +57,7 @@ class my_top_block(gr.top_block):
         #self.connect(self.txpath, gr.file_sink(gr.sizeof_gr_complex, "txpath.dat"))
         
         if options.verbose:
-        	self._print_verbage()
+            self._print_verbage()
         
     def _setup_usrp_sink(self):
         """
@@ -67,8 +67,8 @@ class my_top_block(gr.top_block):
         self.u = uhd.usrp_sink(
             device_addr = "",
             io_type=uhd.io_type.COMPLEX_FLOAT32,
-			num_channels=1,
-		)
+            num_channels=1,
+        )
 
         self.u.set_samp_rate(self._rate)
 
@@ -80,7 +80,7 @@ class my_top_block(gr.top_block):
         gain = self.u.get_gain_range()
         #set the gain to the midpoint if it's currently out of bounds
         if self.gain > gain.stop() or self.gain < gain.start():
-        	self.gain = (gain.stop() + gain.start()) / 2
+            self.gain = (gain.stop() + gain.start()) / 2
         self.set_gain(self.gain)
 
     def set_freq(self, target_freq):
@@ -158,7 +158,7 @@ def main():
     parser.add_option("","--discontinuous", action="store_true", default=False,
                       help="enable discontinuous mode")
     parser.add_option("","--gain", type="eng_float", default=11.5,
-    				  help="set transmitter gain [default=%default]")
+                      help="set transmitter gain [default=%default]")
 
     my_top_block.add_options(parser, expert_grp)
     transmit_path.add_options(parser, expert_grp)

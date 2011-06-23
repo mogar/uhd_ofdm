@@ -41,7 +41,7 @@ class cs_mac(object):
     is just an example.
     """
     def __init__(self, options):
-    	#updated by Morgan Redfield on 2011 May 16
+        #updated by Morgan Redfield on 2011 May 16
         self.verbose = options.verbose
         self.tb = None             # top block (access to PHY)
         
@@ -71,77 +71,77 @@ class cs_mac(object):
         self.tb = tb
 
     def phy_rx_callback(self, ok, payload):
-    	#updated by Morgan Redfield on 2011 May 16
+        #updated by Morgan Redfield on 2011 May 16
         """
         Invoked by thread associated with PHY to pass received packet up.
 
         @param ok: bool indicating whether payload CRC was OK
         @param payload: contents of the packet (string)
         """
-        if len(payload) == 0 or (payload[-1] == self.address):
-        	return
-        	
+        if len(payload) == 0 or (payload[1] == self.address):
+            return
+            
         self.rcvd += 1
 
         if self.verbose:
             print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))
         if ok:
-        	sender = payload[1]
-        	payload = payload[2:]
-        	#question: is it possible that a packet sent from this function will 
-        	#interfere with a packet sent from the main_loop function?
-        	self.rcvd_ok += 1
-        	if self.verbose:
-        		print "RX: ", payload
+            sender = payload[1]
+            payload = payload[2:]
+            #question: is it possible that a packet sent from this function will 
+            #interfere with a packet sent from the main_loop function?
+            self.rcvd_ok += 1
+            if self.verbose:
+                print "RX: ", payload
 
-        	#is this a ctl packet?
-        	if payload == "ACK":
-        		self.ACK_rcvd = True
-        		self.RTS_rcvd = False
-        	elif payload == "RTS":
-        		#wait for SIFS
-        		self.RTS_rcvd = True
-        		self.MAC_delay(self.SIFS_time)
-        		#only send the CTS signal if noone else is transmitting
-        		if not self.tb.carrier_sensed():
-        			self.tb.txpath.send_pkt(sender + self.address + "CTS")
-        			self.sent += 1
-        	elif payload == "CTS":
-        		self.CTS_rcvd = True
-        	else:
-        		self.rcvd_data += 1
-        		if payload == "EOF":
-        			self.EOF_rcvd = True
-	        	#wait for SIFS
-	        	self.MAC_delay(self.SIFS_time)
-    	    	#send ACK
-    	    	#currently not affixing ACKS to other packets that are being sent
-    	    	#this will probably cause latency issues
-        		self.tb.txpath.send_pkt(sender + self.address + "ACK")
-        		self.RTS_rcvd = False
-        		self.sent += 1
-	
+            #is this a ctl packet?
+            if payload == "ACK":
+                self.ACK_rcvd = True
+                self.RTS_rcvd = False
+            elif payload == "RTS":
+                #wait for SIFS
+                self.RTS_rcvd = True
+                self.MAC_delay(self.SIFS_time)
+                #only send the CTS signal if noone else is transmitting
+                if not self.tb.carrier_sensed():
+                    self.tb.txpath.send_pkt(sender + self.address + "CTS")
+                    self.sent += 1
+            elif payload == "CTS":
+                self.CTS_rcvd = True
+            else:
+                self.rcvd_data += 1
+                if payload == "EOF":
+                    self.EOF_rcvd = True
+                #wait for SIFS
+                self.MAC_delay(self.SIFS_time)
+                #send ACK
+                #currently not affixing ACKS to other packets that are being sent
+                #this will probably cause latency issues
+                self.tb.txpath.send_pkt(sender + self.address + "ACK")
+                self.RTS_rcvd = False
+                self.sent += 1
+    
     def DIFS(self):
-    	#added by Morgan Redfield 2011 May 16
-    	start_DIFS = time.clock()
-    	while time.clock() - start_DIFS < self.DIFS_time:
-    		if self.tb.carrier_sensed():
-    			return False
-    		#do spectrum sensing
-    		pass #TODO: spectrum sense somehow
-    	return True
-    	
+        #added by Morgan Redfield 2011 May 16
+        start_DIFS = time.clock()
+        while time.clock() - start_DIFS < self.DIFS_time:
+            if self.tb.carrier_sensed():
+                return False
+            #do spectrum sensing
+            pass #TODO: spectrum sense somehow
+        return True
+        
     def MAC_delay(self, delay_time):
-    	#added by Morgan Redfield 2011 May 16
-    	"""
-    	Delay for a certain amount of time. Used instead of time.sleep()
-    	
-    	@param delay_time: number of seconds to delay for (can be fractional)
-    	"""
-    	start_delay = time.clock()
-    	while time.clock() - start_delay < self.DIFS_time:
-    		pass
-    		
+        #added by Morgan Redfield 2011 May 16
+        """
+        Delay for a certain amount of time. Used instead of time.sleep()
+        
+        @param delay_time: number of seconds to delay for (can be fractional)
+        """
+        start_delay = time.clock()
+        while time.clock() - start_delay < self.DIFS_time:
+            pass
+            
     def main_loop(self, num_packets):
         """
         Main loop for MAC. This loop will generate and send num_packets worth of packets.
@@ -158,15 +158,15 @@ class cs_mac(object):
             #payload = os.read(self.tun_fd, 10*1024)
             
             if current_packet < num_packets:
-            	current_packet += 1
-            	payload = time.strftime('%y%m%d_%H%M%S') + ", this is packet number " + str(current_packet)
+                current_packet += 1
+                payload = time.strftime('%y%m%d_%H%M%S') + ", this is packet number " + str(current_packet)
             else:
-            	payload = "EOF"
-            	done = True
+                payload = "EOF"
+                done = True
             
             if self.verbose and payload:
-            	print "packet: ", current_packet
-            	#print "Tx: len(payload)=", len(payload)
+                print "packet: ", current_packet
+                #print "Tx: len(payload)=", len(payload)
             
             #set up bookkeeping variables for CSMA/CA
             backoff_now = True
@@ -177,58 +177,58 @@ class cs_mac(object):
                                     
             #attempt to send the packet until we recieve an ACK or it's time to give up
             while payload and not self.ACK_rcvd and packet_lifetime > packet_retries:
-            	#do the backoff
-            	if backoff_now:
-            		backoff_now = False
-            		#choose a random backoff time
-            		backoff_time = random.randrange(0, 2**packet_retries * CWmin, 1)
-            		#increment the packet_retries now that we've used it
-            		#the next time we back off should have a longer delay time
-	            	packet_retries += 1
-            		#do the actual waiting
-            		while backoff_time != 0:
-            			while not self.DIFS():
-            				pass #self.DIFS() returns false if the carrier is sensed active
-            			while not self.tb.carrier_sensed() and backoff_time > 0:
-            				self.MAC_delay(self.backoff_time_unit)
-            				backoff_time = backoff_time - 1
-            	
-            	#done with backoff, now try sending data
-            	if self.RTS_rcvd:
-            		#if we expect to rcv data and ack packets, don't transmitting
-            		start_delay = time.clock()
-    	    		while time.clock() - start_delay < self.rnd_trip_time:
-    	    			if not self.RTS_rcvd:
-    	    				start_delay = 0
-    	    		self.RTS_rcvd = False
-            	elif not self.tb.carrier_sensed(): #the spectrum isn't busy or expected to be busy
-            		self.tb.txpath.send_pkt('x' + self.address + "RTS")
-            		self.sent += 1
-            		self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
-            		if self.CTS_rcvd: 
-            			self.MAC_delay(self.SIFS_time)
-            			self.CTS_rcvd = False
-            			self.tb.txpath.send_pkt('x' + self.address + payload)
-            			#wait for SIFS + ACK packet time
-            			self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
-            			self.sent += 1
-            			#ACK should be true now, so the loop will exit
-            		else: #we're not clear to send, so wait again
-            			backoff_now = True
-            	else: #the spectrum's busy, so wait again
-            		backoff_now = True
+                #do the backoff
+                if backoff_now:
+                    backoff_now = False
+                    #choose a random backoff time
+                    backoff_time = random.randrange(0, 2**packet_retries * CWmin, 1)
+                    #increment the packet_retries now that we've used it
+                    #the next time we back off should have a longer delay time
+                    packet_retries += 1
+                    #do the actual waiting
+                    while backoff_time != 0:
+                        while not self.DIFS():
+                            pass #self.DIFS() returns false if the carrier is sensed active
+                        while not self.tb.carrier_sensed() and backoff_time > 0:
+                            self.MAC_delay(self.backoff_time_unit)
+                            backoff_time = backoff_time - 1
+                
+                #done with backoff, now try sending data
+                if self.RTS_rcvd:
+                    #if we expect to rcv data and ack packets, don't transmitting
+                    start_delay = time.clock()
+                    while time.clock() - start_delay < self.rnd_trip_time:
+                        if not self.RTS_rcvd:
+                            start_delay = 0
+                    self.RTS_rcvd = False
+                elif not self.tb.carrier_sensed(): #the spectrum isn't busy or expected to be busy
+                    self.tb.txpath.send_pkt('x' + self.address + "RTS")
+                    self.sent += 1
+                    self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
+                    if self.CTS_rcvd: 
+                        self.MAC_delay(self.SIFS_time)
+                        self.CTS_rcvd = False
+                        self.tb.txpath.send_pkt('x' + self.address + payload)
+                        #wait for SIFS + ACK packet time
+                        self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
+                        self.sent += 1
+                        #ACK should be true now, so the loop will exit
+                    else: #we're not clear to send, so wait again
+                        backoff_now = True
+                else: #the spectrum's busy, so wait again
+                    backoff_now = True
             #end while, packet sent or dropped
             
             #report packet loss
             if packet_lifetime < packet_retries:
-            	current_packet = current_packet + 1
-            	
+                current_packet = current_packet + 1
+                
             #make sure that any recieved ACKs don't get confused with the next packet
             self.ACK_rcvd = False
 
         #while not self.EOF_rcvd:
-        #	#just hang out until the other node is done
-        #	time.sleep(1)
+        #    #just hang out until the other node is done
+        #    time.sleep(1)
         
     def add_options(normal, expert):
         """

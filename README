@@ -1,5 +1,14 @@
 This project is a modification of the OFDM tunnel code from gnuradio to use UHD.
 
+Getting OFDM working seems to be an exercise in choosing the correct gains. The default
+gain settings in the files work well for my N210s with WBX daughterboards, but they don't
+work with my E100. Play around with gain settings if OFDM doesn't work well.
+
+Another problem you may run into is subcarrier bandwidth. If you have a lot of subcarriers
+distributed over not much bandwidth, it'll be much harder to receive anthing. I'm using a 
+sample rate of 800kS/s with my N210s and an fft-length of 256. This seems to work pretty well
+for me. If you use a larger sample rate, you can probably get away with a longer fft-length.
+
 You may have to account for frequency offsets when using OFDM between two USRPs. You can do this 
 manually by transmitting from one USRP on the desired frequency (in our examples 648.8M). At the
 receiver, use an FFT to view the OFDM signal. There should be two null subcarriers right in the
@@ -10,13 +19,11 @@ tx frequency until it's as close as you can get.
 
 To use the benchmark scripts:
 -----------------------------
-Note: I found that I had an overall frequency offset of about 1KHz, so my frequency settings are
-not the same in these examples. You'll have to figure out your offset yourself.
 
-TX side: python benchmark_ofdm_tx.py -f 648.801M -v --gain=11.5 -M 15 --tx-amplitude=.8 --rate=1M
+TX side: python benchmark_ofdm_tx.py -f 648.8M -v --gain=11.5 -M 15 --tx-amplitude=.8 --rate=1M
 RX side: python benchmark_ofdm_rx.py -f 648.8M -v --rx-gain=17 --rate=1M
 
 To use ofdm_csma_ca_test:
 -------------------------
 
-python ofdm_csma_ca_test.py -f 648.8M -v
+python ofdm_csma_ca_test.py -f 650M -v -c 60 --fft-length=256 --occupied-tones=128

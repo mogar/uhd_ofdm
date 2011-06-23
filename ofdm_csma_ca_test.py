@@ -69,10 +69,10 @@ from csma_ca_mac import *
 # Linux specific...
 # TUNSETIFF ifr flags from <linux/tun_if.h>
 
-#IFF_TUN		= 0x0001   # tunnel IP packets
-#IFF_TAP		= 0x0002   # tunnel ethernet frames
-#IFF_NO_PI	= 0x1000   # don't pass extra packet info
-#IFF_ONE_QUEUE	= 0x2000   # beats me ;)
+#IFF_TUN        = 0x0001   # tunnel IP packets
+#IFF_TAP        = 0x0002   # tunnel ethernet frames
+#IFF_NO_PI    = 0x1000   # don't pass extra packet info
+#IFF_ONE_QUEUE    = 0x2000   # beats me ;)
 
 #def open_tun_interface(tun_device_filename):
 #    from fcntl import ioctl
@@ -98,7 +98,7 @@ class usrp_graph(gr.top_block):
         self._tx_gain            = options.tx_gain         # transmitter's gain
         #self._tx_subdev_spec     = options.tx_subdev_spec  # daughterboard to use
         #updated 2011 May 27, MR
-        self._samp_rate			 = options.samp_rate	   # sample rate for USRP
+        self._samp_rate             = options.samp_rate       # sample rate for USRP
         #self._interp             = options.interp          # interpolating rate for the USRP (prelim)
         self._rx_freq            = options.rx_freq         # receiver's center frequency
         self._rx_gain            = options.rx_gain         # receiver's gain
@@ -168,19 +168,19 @@ class usrp_graph(gr.top_block):
         g = self.u_snk.get_gain_range()
         #set the gain to the midpoint if it's currently out of bounds
         if self._tx_gain > g.stop() or self._tx_gain < g.start():
-        	self._tx_gain = (g.stop() + g.start()) / 2
+            self._tx_gain = (g.stop() + g.start()) / 2
         self.u_snk.set_gain(self._tx_gain)
 
         # enable Auto Transmit/Receive switching
         #self.set_auto_tr(True)
 
     def _setup_usrp_source(self):
-    	#updated 2011 May 27, MR
-    	self.u_src = uhd.usrp_source(device_addr="", io_type=uhd.io_type.COMPLEX_FLOAT32,
-    							 num_channels=1)
-    	self.u_src.set_antenna("TX/RX", 0)
-    							 
-    	self.u_src.set_subdev_spec("",0)
+        #updated 2011 May 27, MR
+        self.u_src = uhd.usrp_source(device_addr="", io_type=uhd.io_type.COMPLEX_FLOAT32,
+                                 num_channels=1)
+        self.u_src.set_antenna("TX/RX", 0)
+                                 
+        self.u_src.set_subdev_spec("",0)
         #self.u_src = usrp.source_c (fusb_block_size=self._fusb_block_size,
         #                        fusb_nblocks=self._fusb_nblocks)
         #adc_rate = self.u_src.adc_rate()
@@ -191,7 +191,7 @@ class usrp_graph(gr.top_block):
         g = self.u_src.get_gain_range()
         #set the gain to the midpoint if it's currently out of bounds
         if self._rx_gain > g.stop() or self._rx_gain < g.start():
-        	self._rx_gain = (g.stop() + g.start()) / 2
+            self._rx_gain = (g.stop() + g.start()) / 2
         self.u_src.set_gain(self._rx_gain)
 
         # determine the daughterboard subdevice we're using
@@ -236,7 +236,7 @@ class usrp_graph(gr.top_block):
     #    self.u_snk.set_gain(gain, 0)
     #    #self.subdev.set_gain(gain)
 
-	#removed 2011 May 27, MR
+    #removed 2011 May 27, MR
     #def set_auto_tr(self, enable):
     #    """
     #    Turns on auto transmit/receive of USRP daughterboard (if exits; else ignored)
@@ -259,8 +259,8 @@ class usrp_graph(gr.top_block):
         expert.add_option("", "--tx-freq", type="eng_float", default=None,
                           help="set Tx frequency to FREQ [default=%default]", metavar="FREQ")
         #updated 2011 May 27, MR
-        expert.add_option("-s", "--samp_rate", type="intx", default=800000,
-        				   help="set sample rate for USRP to SAMP_RATE [default=%default]")
+        expert.add_option("-r", "--samp_rate", type="intx", default=800000,
+                           help="set sample rate for USRP to SAMP_RATE [default=%default]")
         #expert.add_option("-i", "--interp", type="intx", default=256,
         #                  help="set fpga interpolation rate to INTERP [default=%default]")
         #normal.add_option("-R", "--rx-subdev-spec", type="subdev", default=None,
@@ -288,7 +288,7 @@ class usrp_graph(gr.top_block):
         #print "Using TX d'board %s"    % (self.subdev.side_and_name(),)
         print "modulation:      %s"    % (self._modulator_class.__name__)
         #updated 2011 May 27, MR
-        print "samp_rate		%3d"   % (self._samp_rate)
+        print "samp_rate        %3d"   % (self._samp_rate)
         #print "interp:          %3d"   % (self._interp)
         print "Tx Frequency:    %s"    % (eng_notation.num_to_str(self._tx_freq))
         
@@ -321,7 +321,7 @@ def main():
                       help="Select modulation from: bpsk, qpsk [default=%%default]")
     parser.add_option("-v","--verbose", action="store_true", default=False)
     parser.add_option("-p","--packets", type="int", default = 40, 
-    					  help="set number of packets to send [default=%default]")
+                          help="set number of packets to send [default=%default]")
     parser.add_option("", "--address", type="string", default = 'a',
                           help="set the address of the node (addresses are a single char) [default=%default]")
     expert_grp.add_option("-c", "--carrier-threshold", type="eng_float", default=30,
@@ -417,7 +417,7 @@ def main():
     print "this node rcvd ", mac.rcvd, " packets"
     print "this node rcvd ", mac.rcvd_ok, " packets correctly"
     print "this node rcvd ", mac.rcvd_data, " data packets correctly"
-	
+    
     tb.stop()     # but if it does, tell flow graph to stop.
     tb.wait()     # wait for it to finish
     

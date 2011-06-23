@@ -55,8 +55,8 @@ class my_top_block(gr.top_block):
         self.set_gain(options.rx_gain)
                 
         if options.verbose:
-        	self._print_verbage()
-		
+            self._print_verbage()
+        
         # Set up receive path
         self.rxpath = receive_path(callback, options)
         #self.file = gr.file_sink(gr.sizeof_gr_complex, "usrp_source.dat")
@@ -68,8 +68,8 @@ class my_top_block(gr.top_block):
         self.u = uhd.usrp_source(
             device_addr = "",
             io_type=uhd.io_type.COMPLEX_FLOAT32,
-			num_channels=1,
-		)
+            num_channels=1,
+        )
         self.u.set_samp_rate(self._rate)
         self.u.set_antenna("TX/RX", 0)
 

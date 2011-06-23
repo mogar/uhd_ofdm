@@ -36,9 +36,9 @@ from pick_bitrate import pick_rx_bitrate
 class receive_path(gr.hier_block2):
     def __init__(self, rx_callback, options):
 
-	gr.hier_block2.__init__(self, "receive_path",
-				gr.io_signature(1, 1, gr.sizeof_gr_complex), # Input signature
-				gr.io_signature(0, 0, 0)) # Output signature
+        gr.hier_block2.__init__(self, "receive_path",
+                gr.io_signature(1, 1, gr.sizeof_gr_complex), # Input signature
+                gr.io_signature(0, 0, 0)) # Output signature
 
 
         options = copy.copy(options)    # make a copy so we can destructively modify
