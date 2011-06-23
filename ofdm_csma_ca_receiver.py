@@ -165,7 +165,7 @@ class usrp_graph(gr.top_block):
                           help="set Rx frequency to FREQ [default=%default]", metavar="FREQ")
         expert.add_option("", "--tx-freq", type="eng_float", default=None,
                           help="set Tx frequency to FREQ [default=%default]", metavar="FREQ")
-        expert.add_option("-s", "--samp_rate", type="intx", default=400000,
+        expert.add_option("-s", "--samp_rate", type="intx", default=800000,
         				   help="set sample rate for USRP to SAMP_RATE [default=%default]")
         normal.add_option("", "--rx-gain", type="eng_float", default=17, metavar="GAIN",
                           help="set receiver gain in dB [default=%default].  See also --show-rx-gain-range")

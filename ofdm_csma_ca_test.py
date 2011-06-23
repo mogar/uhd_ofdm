@@ -259,7 +259,7 @@ class usrp_graph(gr.top_block):
         expert.add_option("", "--tx-freq", type="eng_float", default=None,
                           help="set Tx frequency to FREQ [default=%default]", metavar="FREQ")
         #updated 2011 May 27, MR
-        expert.add_option("-s", "--samp_rate", type="intx", default=1000000,
+        expert.add_option("-s", "--samp_rate", type="intx", default=800000,
         				   help="set sample rate for USRP to SAMP_RATE [default=%default]")
         #expert.add_option("-i", "--interp", type="intx", default=256,
         #                  help="set fpga interpolation rate to INTERP [default=%default]")

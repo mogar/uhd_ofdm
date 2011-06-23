@@ -9,8 +9,15 @@
 # Currently the MAC just generates its own packets. Eventually this might be tied
 # in with TUN/TAP.
 #
+# Addressing in this MAC is super kludgy. I'm basically just prepending a character
+# to every packet that I send and using that as an address. The return address is
+# apended to the end of the packet. I'm reserving 
+# the characters 'x', 'y', and 'z' for special functions.
+# 'x' is a broadcast packet (all packets are broadcast for now
+# 'y', and 'z' are for future applications
+#
 # ToDo:
-# fix the addresses (they're very kludgy now)
+# I'm using RTS/CTS with broadcast packets, that can't work with more than 2 nodes
 # figure out delay time parameters (minimize)
 # TUN/TAP
 # /////////////////////////////////////////////////////////////////////////////
@@ -71,7 +78,7 @@ class cs_mac(object):
         @param ok: bool indicating whether payload CRC was OK
         @param payload: contents of the packet (string)
         """
-        if len(payload) == 0 or payload[0] == self.address:
+        if len(payload) == 0 or (payload[0] != self.address and payload[0] != 'x'):
         	return
         	
         self.rcvd += 1
@@ -79,7 +86,8 @@ class cs_mac(object):
         if self.verbose:
             print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))
         if ok:
-        	payload = payload[1:]
+        	sender = payload[-1]
+        	payload = payload[1:-1]
         	#question: is it possible that a packet sent from this function will 
         	#interfere with a packet sent from the main_loop function?
         	self.rcvd_ok += 1
@@ -96,7 +104,7 @@ class cs_mac(object):
         		self.MAC_delay(self.SIFS_time)
         		#only send the CTS signal if noone else is transmitting
         		if not self.tb.carrier_sensed():
-        			self.tb.txpath.send_pkt(self.address + "CTS")
+        			self.tb.txpath.send_pkt(sender + "CTS" + self.address)
         			self.sent += 1
         	elif payload == "CTS":
         		self.CTS_rcvd = True
@@ -109,7 +117,7 @@ class cs_mac(object):
     	    	#send ACK
     	    	#currently not affixing ACKS to other packets that are being sent
     	    	#this will probably cause latency issues
-        		self.tb.txpath.send_pkt(self.address + "ACK")
+        		self.tb.txpath.send_pkt(sender + "ACK" + self.address)
         		self.RTS_rcvd = False
         		self.sent += 1
 	
@@ -192,13 +200,13 @@ class cs_mac(object):
     	    				start_delay = 0
     	    		self.RTS_rcvd = False
             	elif not self.tb.carrier_sensed(): #the spectrum isn't busy or expected to be busy
-            		self.tb.txpath.send_pkt(self.address + "RTS")
+            		self.tb.txpath.send_pkt('x' + "RTS" + self.address)
             		self.sent += 1
             		self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             		if self.CTS_rcvd: 
             			self.MAC_delay(self.SIFS_time)
             			self.CTS_rcvd = False
-            			self.tb.txpath.send_pkt(self.address + payload)
+            			self.tb.txpath.send_pkt('x' + payload + self.address)
             			#wait for SIFS + ACK packet time
             			self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
             			self.sent += 1
