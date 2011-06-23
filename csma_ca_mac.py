@@ -1,5 +1,23 @@
+# /////////////////////////////////////////////////////////////////////////////
+#                           Carrier Sense MAC
+#
+# FuNLab
+# University of Washington
+# Morgan Redfield
+#
+# Implement a CSMA CA MAC. Note that this is not 802.11 (not even close).
+# Currently the MAC just generates its own packets. Eventually this might be tied
+# in with TUN/TAP.
+#
+# ToDo:
+# fix the addresses (they're very kludgy now)
+# figure out delay time parameters (minimize)
+# TUN/TAP
+# /////////////////////////////////////////////////////////////////////////////
 
 import time
+import random
+
 # /////////////////////////////////////////////////////////////////////////////
 #                           Carrier Sense MAC
 # /////////////////////////////////////////////////////////////////////////////
@@ -123,11 +141,7 @@ class cs_mac(object):
         an eof packet (to make sure the other node is also done sending).
         
         @param num_packets: number of packets to send before exiting loop
-
-        FIXME: may want to check for EINTR and EAGAIN and reissue read
         """
-        #updated by Morgan Redfield on 2011 May 16
-
         done = False
         current_packet = 0
         while not done:
@@ -148,11 +162,8 @@ class cs_mac(object):
             backoff_now = True
             backoff_time = 0
             packet_retries = 0 #start with max of 31 backoff time slots
-            CWmin = 5 #figure out what this should be
-            packet_lifetime = 5 #how many times should we try to send?
-            #I set packet_lifetime pretty low because I don't think that we'll see a lot of
-            #contention in this test. It seems like we'll be able to transmit the packet in only
-            #a couple of tries
+            CWmin = 5
+            packet_lifetime = 5
                                     
             #attempt to send the packet until we recieve an ACK or it's time to give up
             while payload and not self.ACK_rcvd and packet_lifetime > packet_retries:
