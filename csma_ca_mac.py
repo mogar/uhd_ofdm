@@ -78,7 +78,7 @@ class cs_mac(object):
         @param ok: bool indicating whether payload CRC was OK
         @param payload: contents of the packet (string)
         """
-        if len(payload) == 0 or (payload[0] != self.address and payload[0] != 'x'):
+        if len(payload) == 0 or (payload[-1] == self.address):
         	return
         	
         self.rcvd += 1
