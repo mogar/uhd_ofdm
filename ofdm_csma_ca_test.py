@@ -365,7 +365,7 @@ class cs_mac(object):
         	#interfere with a packet sent from the main_loop function?
         	self.rcvd_ok += 1
         	if self.verbose:
-        		print payload
+        		print "RX: ", payload
 
         	#is this a ctl packet?
         	if payload == "ACK":
@@ -443,7 +443,7 @@ class cs_mac(object):
             
             if self.verbose and payload:
             	print "packet: ", current_packet
-            	print "Tx: len(payload)=", len(payload)
+            	#print "Tx: len(payload)=", len(payload)
             
             #set up bookkeeping variables for CSMA/CA
             backoff_now = True
@@ -512,7 +512,7 @@ class cs_mac(object):
 
         while not self.EOF_rcvd:
         	#just hang out until the other node is done
-        	pass
+        	time.sleep(1)
 
 
 
