@@ -379,6 +379,7 @@ class cs_mac(object):
         		if not self.tb.carrier_sensed():
         			self.tb.rx_valve.set_enabled(False)
         			self.tb.txpath.send_pkt("CTS")
+        			time.sleep(.001)
         			self.tb.rx_valve.set_enabled(True)
         			self.sent += 1
         	elif payload == "CTS":
@@ -393,6 +394,7 @@ class cs_mac(object):
     	    	#this will probably cause latency issues
     			self.tb.rx_valve.set_enabled(False)
         		self.tb.txpath.send_pkt("ACK")
+        		time.sleep(.001)
         		self.tb.rx_valve.set_enabled(True)
         		self.sent += 1
 	
@@ -484,6 +486,7 @@ class cs_mac(object):
             	elif not self.tb.carrier_sensed(): #the spectrum isn't busy or expected to be busy
             		self.tb.rx_valve.set_enabled(False)
             		self.tb.txpath.send_pkt("RTS")
+            		time.sleep(.001)
             		self.tb.rx_valve.set_enabled(True)
             		self.sent += 1
             		self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
@@ -492,6 +495,7 @@ class cs_mac(object):
             			self.CTS_rcvd = False
             			self.tb.rx_valve.set_enabled(False)
             			self.tb.txpath.send_pkt(payload)
+            			time.sleep(.001)
             			self.tb.rx_valve.set_enabled(True)
             			#wait for SIFS + ACK packet time
             			self.MAC_delay(self.SIFS_time + self.ctl_pkt_time)
