@@ -321,9 +321,9 @@ class cs_mac(object):
     Of course, we're not restricted to getting packets via TUN/TAP, this
     is just an example.
     """
-    def __init__(self, verbose=False, address = ""):
+    def __init__(self, options):
     	#updated by Morgan Redfield on 2011 May 16
-        self.verbose = verbose
+        self.verbose = options.verbose
         self.tb = None             # top block (access to PHY)
         
         #control packet bookkeeping
@@ -332,15 +332,15 @@ class cs_mac(object):
         self.EOF_rcvd = False
         self.RTS_rcvd = False
         
-        self.address = address
+        self.address = options.address
         
         #delay time parameters
         #bus latency is also going to be a problem here
-        self.SIFS_time = .005#.000028 #seconds
-        self.DIFS_time = .01#.000128 #seconds
-        self.ctl_pkt_time = .01#seconds. How long should this be?
-        self.rnd_trip_time = .1
-        self.backoff_time_unit = .01#.000078 #seconds
+        self.SIFS_time = options.sifs
+        self.DIFS_time = options.difs
+        self.ctl_pkt_time = options.ctl
+        self.rnd_trip_time = options.rnd_trip
+        self.backoff_time_unit = options.backoff
         
         #measurement variables
         self.rcvd = 0
@@ -358,7 +358,7 @@ class cs_mac(object):
         @param ok: bool indicating whether payload CRC was OK
         @param payload: contents of the packet (string)
         """
-        if payload[0] == self.address:
+        if len(payload) == 0 or payload[0] == self.address:
         	return
         	
         self.rcvd += 1
@@ -396,6 +396,7 @@ class cs_mac(object):
     	    	#currently not affixing ACKS to other packets that are being sent
     	    	#this will probably cause latency issues
         		self.tb.txpath.send_pkt(self.address + "ACK")
+        		self.RTS_rcvd = False
         		self.sent += 1
 	
     def DIFS(self):
@@ -511,7 +512,23 @@ class cs_mac(object):
         #while not self.EOF_rcvd:
         #	#just hang out until the other node is done
         #	time.sleep(1)
-
+        
+    def add_options(normal, expert):
+        """
+        Adds MAC-specific options to the Options Parser
+        """
+        expert.add_option("", "--sifs", type="eng_float", default=.001,
+                          help="set SIFS time [default=%default]")
+        expert.add_option("", "--difs", type="eng_float", default=.005,
+                          help="set DIFS time [default=%default]")
+        expert.add_option("", "--ctl", type="eng_float", default=.01,
+                          help="set control packet time [default=%default]")
+        expert.add_option("", "--rnd-trip", type="eng_float", default=.1,
+                          help="set round trip time for RTS-CTS-data [default=%default]")
+        expert.add_option("", "--backoff", type="eng_float", default=.01,
+                          help="set backoff time [default=%default]")
+    # Make a static method to call before instantiation
+    add_options = staticmethod(add_options)
 
 
 # /////////////////////////////////////////////////////////////////////////////
@@ -539,6 +556,7 @@ def main():
     receive_path.add_options(parser, expert_grp)
     blks2.ofdm_mod.add_options(parser, expert_grp)
     blks2.ofdm_demod.add_options(parser, expert_grp)
+    cs_mac.add_options(parser, expert_grp)
 
     #removed 2011 May 27, MR
     #fusb_options.add_options(expert_grp)
@@ -578,7 +596,7 @@ def main():
     #print "fusb_nblocks    =", options.fusb_nblocks
 
     # instantiate the MAC
-    mac = cs_mac(options.verbose, options.address)
+    mac = cs_mac(options)
 
 
     # build the graph (PHY)
