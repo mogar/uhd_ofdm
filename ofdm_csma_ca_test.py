@@ -346,6 +346,7 @@ class cs_mac(object):
         self.rcvd = 0
         self.rcvd_ok = 0
         self.sent = 0
+        self.rcvd_data = 0
 
     def set_flow_graph(self, tb):
         self.tb = tb
@@ -388,6 +389,7 @@ class cs_mac(object):
         	elif payload == "CTS":
         		self.CTS_rcvd = True
         	else:
+        		self.rcvd_data += 1
         		if payload == "EOF":
         			self.EOF_rcvd = True
 	        	#wait for SIFS
@@ -641,6 +643,7 @@ def main():
     print "this node sent ", mac.sent, " packets"
     print "this node rcvd ", mac.rcvd, " packets"
     print "this node rcvd ", mac.rcvd_ok, " packets correctly"
+    print "this node rcvd ", mac.rcvd_data, " data packets correctly"
 	
     tb.stop()     # but if it does, tell flow graph to stop.
     tb.wait()     # wait for it to finish
