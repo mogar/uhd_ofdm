@@ -424,7 +424,7 @@ def main():
         print "\t", item
     print "succesfully sent the following packets"
     for item in mac.sent_pkts:
-        print "\t" item
+        print "\t", item
     tb.stop()     # but if it does, tell flow graph to stop.
     #tb.wait()     # wait for it to finish
     
