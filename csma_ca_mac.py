@@ -62,10 +62,13 @@ class cs_mac(object):
         self.backoff_time_unit = options.backoff
         
         #measurement variables
+        self.current_packet
         self.rcvd = 0
         self.rcvd_ok = 0
         self.sent = 0
         self.rcvd_data = 0
+        self.rcvd_pkts = []
+        self.sent_pkts = []
 
     def set_flow_graph(self, tb):
         self.tb = tb
@@ -99,29 +102,34 @@ class cs_mac(object):
                 print "RX: ", payload
 
             #is this a ctl packet?
-            if payload == "ACK":
+            if len(payload) == 3:
+	            if payload == "RTS":
+    	            #wait for SIFS
+        	        self.RTS_rcvd = True
+            	    self.MAC_delay(self.SIFS_time)
+                	#only send the CTS signal if noone else is transmitting
+                	if not self.tb.carrier_sensed():
+                	    self.tb.txpath.send_pkt(sender + self.address + "CTS")
+                    	self.sent += 1
+            	elif payload == "CTS":
+                	self.CTS_rcvd = True
+                #else something strange has happened
+            elif payload[3:] == "ACK":
                 self.ACK_rcvd = True
                 self.RTS_rcvd = False
-            elif payload == "RTS":
-                #wait for SIFS
-                self.RTS_rcvd = True
-                self.MAC_delay(self.SIFS_time)
-                #only send the CTS signal if noone else is transmitting
-                if not self.tb.carrier_sensed():
-                    self.tb.txpath.send_pkt(sender + self.address + "CTS")
-                    self.sent += 1
-            elif payload == "CTS":
-                self.CTS_rcvd = True
+                self.sent_pkts.append(payload[:3])
+                self.current_packet += 1
             else:
                 self.rcvd_data += 1
-                if payload == "EOF":
+                self.rcvd_pkts.append(int(payload[:3]))
+                if payload[3:] == "EOF":
                     self.EOF_rcvd = True
                 #wait for SIFS
                 self.MAC_delay(self.SIFS_time)
                 #send ACK
                 #currently not affixing ACKS to other packets that are being sent
                 #this will probably cause latency issues
-                self.tb.txpath.send_pkt(sender + self.address + "ACK")
+                self.tb.txpath.send_pkt(sender + self.address + payload[:3] + "ACK")
                 self.RTS_rcvd = False
                 self.sent += 1
     
@@ -146,6 +154,15 @@ class cs_mac(object):
         while time.clock() - start_delay < self.DIFS_time:
             pass
             
+    def generate_next_packet():
+    	"""
+    	Generate the next packet to send
+    	"""
+        payload = str(self.current_packet).zfill(3) + time.strftime('%y%m%d_%H%M%S') + ", this is packet number " + str(self.current_packet)
+        if self.current_packet >= num_packets
+        	payload = str(self.current_packet).zfill(3) + "EOF"
+        return payload
+    
     def main_loop(self, num_packets):
         """
         Main loop for MAC. This loop will generate and send num_packets worth of packets.
@@ -161,15 +178,10 @@ class cs_mac(object):
             #the following is for TUN
             #payload = os.read(self.tun_fd, 10*1024)
             
-            if current_packet < num_packets:
-                current_packet += 1
-                payload = time.strftime('%y%m%d_%H%M%S') + ", this is packet number " + str(current_packet)
-            else:
-                payload = "EOF"
-                done = True
+            payload = generate_next_packet()
             
             if self.verbose and payload:
-                print "packet: ", current_packet
+                print "packet: ", payload
                 #print "Tx: len(payload)=", len(payload)
             
             #set up bookkeeping variables for CSMA/CA
@@ -225,7 +237,7 @@ class cs_mac(object):
             
             #report packet loss
             if packet_lifetime < packet_retries:
-                current_packet = current_packet + 1
+                self.current_packet = self.current_packet + 1
                 
             #make sure that any recieved ACKs don't get confused with the next packet
             self.ACK_rcvd = False

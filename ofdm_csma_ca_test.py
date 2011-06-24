@@ -417,6 +417,9 @@ def main():
     print "this node rcvd ", mac.rcvd, " packets"
     print "this node rcvd ", mac.rcvd_ok, " packets correctly"
     print "this node rcvd ", mac.rcvd_data, " data packets correctly"
+    print "received the following packets"
+    for item in mac.rcvd_pkts:
+    	print "\t", item
     
     tb.stop()     # but if it does, tell flow graph to stop.
     #tb.wait()     # wait for it to finish
