@@ -52,6 +52,7 @@ class cs_mac(object):
         self.RTS_rcvd = False
         
         self.address = options.address
+        self.num_packets = options.packets
         
         #delay time parameters
         #bus latency is also going to be a problem here
@@ -62,7 +63,7 @@ class cs_mac(object):
         self.backoff_time_unit = options.backoff
         
         #measurement variables
-        self.current_packet
+        self.current_packet = 0
         self.rcvd = 0
         self.rcvd_ok = 0
         self.sent = 0
@@ -103,16 +104,16 @@ class cs_mac(object):
 
             #is this a ctl packet?
             if len(payload) == 3:
-	            if payload == "RTS":
-    	            #wait for SIFS
-        	        self.RTS_rcvd = True
-            	    self.MAC_delay(self.SIFS_time)
-                	#only send the CTS signal if noone else is transmitting
-                	if not self.tb.carrier_sensed():
-                	    self.tb.txpath.send_pkt(sender + self.address + "CTS")
-                    	self.sent += 1
-            	elif payload == "CTS":
-                	self.CTS_rcvd = True
+                if payload == "RTS":
+                    #wait for SIFS
+                    self.RTS_rcvd = True
+                    self.MAC_delay(self.SIFS_time)
+                    #only send the CTS signal if noone else is transmitting
+                    if not self.tb.carrier_sensed():
+                        self.tb.txpath.send_pkt(sender + self.address + "CTS")
+                        self.sent += 1
+                elif payload == "CTS":
+                    self.CTS_rcvd = True
                 #else something strange has happened
             elif payload[3:] == "ACK":
                 self.ACK_rcvd = True
@@ -154,22 +155,20 @@ class cs_mac(object):
         while time.clock() - start_delay < self.DIFS_time:
             pass
             
-    def generate_next_packet():
-    	"""
-    	Generate the next packet to send
-    	"""
+    def generate_next_packet(self):
+        """
+        Generate the next packet to send
+        """
         payload = str(self.current_packet).zfill(3) + time.strftime('%y%m%d_%H%M%S') + ", this is packet number " + str(self.current_packet)
-        if self.current_packet >= num_packets
-        	payload = str(self.current_packet).zfill(3) + "EOF"
+        if self.current_packet >= self.num_packets:
+            payload = str(self.current_packet).zfill(3) + "EOF"
         return payload
     
-    def main_loop(self, num_packets):
+    def main_loop(self):
         """
         Main loop for MAC. This loop will generate and send num_packets worth of packets.
         It will then send an eof packet. The loop will exit when it has both sent and received
         an eof packet (to make sure the other node is also done sending).
-        
-        @param num_packets: number of packets to send before exiting loop
         """
         done = False
         current_packet = 0
@@ -178,7 +177,7 @@ class cs_mac(object):
             #the following is for TUN
             #payload = os.read(self.tun_fd, 10*1024)
             
-            payload = generate_next_packet()
+            payload = self.generate_next_packet()
             
             if self.verbose and payload:
                 print "packet: ", payload
@@ -236,8 +235,9 @@ class cs_mac(object):
             #end while, packet sent or dropped
             
             #report packet loss
-            if packet_lifetime < packet_retries:
-                self.current_packet = self.current_packet + 1
+            if packet_lifetime <= packet_retries:
+                print "failed to send packet"
+                self.current_packet += 1
                 
             #make sure that any recieved ACKs don't get confused with the next packet
             self.ACK_rcvd = False
