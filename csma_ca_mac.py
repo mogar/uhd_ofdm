@@ -178,6 +178,8 @@ class cs_mac(object):
             #payload = os.read(self.tun_fd, 10*1024)
             
             payload = self.generate_next_packet()
+            if payload[3:] == "EOF":
+                done = True
             
             if self.verbose and payload:
                 print "packet: ", payload
