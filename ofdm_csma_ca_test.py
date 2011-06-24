@@ -411,6 +411,8 @@ def main():
     tb.start()    # Start executing the flow graph (runs in separate threads)
 
     mac.main_loop()    # run the tests
+    while not mac.EOF_rcvd:
+        time.sleep(1)
     
     #do stuff with the mac measurement results
     print "this node sent ", mac.sent, " packets"
@@ -420,7 +422,9 @@ def main():
     print "received the following packets"
     for item in mac.rcvd_pkts:
         print "\t", item
-    
+    print "succesfully sent the following packets"
+    for item in mac.sent_pkts
+        print "\t" item
     tb.stop()     # but if it does, tell flow graph to stop.
     #tb.wait()     # wait for it to finish
     

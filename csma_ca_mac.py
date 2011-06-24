@@ -238,7 +238,8 @@ class cs_mac(object):
             
             #report packet loss
             if packet_lifetime <= packet_retries:
-                print "failed to send packet"
+                if self.verbose:
+                     print "failed to send packet"
                 self.current_packet += 1
                 
             #make sure that any recieved ACKs don't get confused with the next packet
