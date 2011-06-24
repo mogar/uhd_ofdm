@@ -115,22 +115,28 @@ class cs_mac(object):
                 elif payload == "CTS":
                     self.CTS_rcvd = True
                 #else something strange has happened
-            elif payload[3:] == "ACK":
+            elif payload[3:6] == "ACK":
                 self.ACK_rcvd = True
                 self.RTS_rcvd = False
-                self.sent_pkts.append(payload[:3])
+                if len(payload) == 6:
+                    self.sent_pkts.append(payload[:3])
+                else:
+                	self.sent_pkts.append(payload[3:])
                 self.current_packet += 1
             else:
                 self.rcvd_data += 1
                 self.rcvd_pkts.append(int(payload[:3]))
                 if payload[3:] == "EOF":
                     self.EOF_rcvd = True
+                    ack = "ACKEOF"
+                else:
+                	ack = "ACK"
                 #wait for SIFS
                 self.MAC_delay(self.SIFS_time)
                 #send ACK
                 #currently not affixing ACKS to other packets that are being sent
                 #this will probably cause latency issues
-                self.tb.txpath.send_pkt(sender + self.address + payload[:3] + "ACK")
+                self.tb.txpath.send_pkt(sender + self.address + payload[:3] + ack)
                 self.RTS_rcvd = False
                 self.sent += 1
     
@@ -178,7 +184,7 @@ class cs_mac(object):
             #payload = os.read(self.tun_fd, 10*1024)
             
             payload = self.generate_next_packet()
-            if payload[3:] == "EOF":
+            if payload[3:] == "EOF" and self.sent_pkts[-1] == "EOF":
                 done = True
             
             if self.verbose and payload:
