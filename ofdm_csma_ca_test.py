@@ -419,7 +419,7 @@ def main():
     print "this node rcvd ", mac.rcvd_data, " data packets correctly"
     
     tb.stop()     # but if it does, tell flow graph to stop.
-    tb.wait()     # wait for it to finish
+    #tb.wait()     # wait for it to finish
     
 
 if __name__ == '__main__':

@@ -78,9 +78,13 @@ class cs_mac(object):
         @param ok: bool indicating whether payload CRC was OK
         @param payload: contents of the packet (string)
         """
+        #if the rcvd packet is empty or from this node, ignore it completely
         if len(payload) == 0 or (payload[1] == self.address):
             return
             
+        #self.rcvd isn't very accurate because it may contain corrupted packets
+        #from this node. It may also miss severely corrupted (len = 0) packets from
+        #other nodes.
         self.rcvd += 1
 
         if self.verbose:
@@ -234,13 +238,13 @@ class cs_mac(object):
         """
         Adds MAC-specific options to the Options Parser
         """
-        expert.add_option("", "--sifs", type="eng_float", default=.001,
+        expert.add_option("", "--sifs", type="eng_float", default=.0001,
                           help="set SIFS time [default=%default]")
         expert.add_option("", "--difs", type="eng_float", default=.005,
                           help="set DIFS time [default=%default]")
         expert.add_option("", "--ctl", type="eng_float", default=.01,
                           help="set control packet time [default=%default]")
-        expert.add_option("", "--rnd-trip", type="eng_float", default=.1,
+        expert.add_option("", "--rnd-trip", type="eng_float", default=.03,
                           help="set round trip time for RTS-CTS-data [default=%default]")
         expert.add_option("", "--backoff", type="eng_float", default=.01,
                           help="set backoff time [default=%default]")

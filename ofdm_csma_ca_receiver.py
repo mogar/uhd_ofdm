@@ -273,10 +273,11 @@ def main():
 
     # I never start the MAC main loop. We just want to recieve
     # run the flow graph and wait until the user stops it.
-    try:
-        tb.run()
-    except KeyboardInterrupt:
-        pass  
+    tb.start()
+    
+    while 1:
+    	if tb.carrier_sensed():
+    		print "Carrier Sensed"
         
     #do stuff with the mac measurement results
     print "this node sent ", mac.sent, " packets"
