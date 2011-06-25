@@ -67,6 +67,7 @@ class cs_mac(object):
         self.rcvd = 0
         self.rcvd_ok = 0
         self.sent = 0
+        self.sent_ok = 0
         self.rcvd_data = 0
         self.rcvd_pkts = []
         self.sent_pkts = []
@@ -116,6 +117,7 @@ class cs_mac(object):
                     self.CTS_rcvd = True
                 #else something strange has happened
             elif payload[3:6] == "ACK":
+                self.sent_ok += 1
                 self.ACK_rcvd = True
                 self.RTS_rcvd = False
                 if len(payload) == 6:
