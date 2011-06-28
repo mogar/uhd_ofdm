@@ -196,7 +196,7 @@ class cs_mac(Thread):
                         log_file.close()
                     self.tx_queue.pop(0)
                 else:
-                	self.next_call = self.SIFS_time
+                    self.next_call = self.SIFS_time
         elif self.state == 2: #done with DIFS, now backoff
             if cb is True and not self.tb.carrier_sensed():
                 if self.backoff == 0:
@@ -252,6 +252,9 @@ class cs_mac(Thread):
                 self.state = 7
                 self.next_call = self.SIFS_time
                 #threading.Timer(self.SIFS_time, self.state_machine).start()
+            else:
+                self.state = 0
+                self.next_call = self.SIFS_time
         elif self.state == 7: #data rcvd, send ACK
             if not self.tb.carrier_sensed():
                 if self.log_mac:
