@@ -216,10 +216,10 @@ def rx_callback(payload):
     if payload == "R:EOF":
         EOF_rcvd = True
     if payload[:1] == "R:":
-	    pkts_rcvd.append(payload)
-	elif payload == "T:failure":
-	    tx_failures += 1
-		
+        pkts_rcvd.append(payload)
+    elif payload == "T:failure":
+        tx_failures += 1
+        
 
 
 def main():
@@ -239,7 +239,7 @@ def main():
                       help="set the address of the node (addresses are a single char) [default=%default]")
     parser.add_option("", "--pkt-gen-time", type="eng_float", default=.5,
                       help="set the time between sending each packet (s) [default=%default]")
-    expert_grp.add_option("-c", "--carrier-threshold", type="eng_float", default=-30,
+    expert_grp.add_option("-c", "--carrier-threshold", type="eng_float", default=-20,
                       help="set carrier detect threshold (dB) [default=%default]")
 
     usrp_graph.add_options(parser, expert_grp)
