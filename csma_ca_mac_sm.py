@@ -23,20 +23,23 @@
 
 import time #for delay timing
 import random #for random backoff
-from threading import * #for main_loop
+import threading #for main_loop
 
 # /////////////////////////////////////////////////////////////////////////////
 #                           Carrier Sense MAC
 # /////////////////////////////////////////////////////////////////////////////
 
-class cs_mac(Thread):
+class cs_mac(threading.Thread):
     """
     Reads packets from the application interface, and sends them to the PHY.
     Receives packets from the PHY via phy_rx_callback, and passes any data
     packets up to the application layer.
     """
     def __init__(self, options, callback):
-        Thread.__init__(self)
+        #thread set up
+        threading.Thread.__init__(self)
+        self._stop = threading.Event()
+        self._done = False
         
         #updated by Morgan Redfield on 2011 May 16
         self.verbose = options.verbose
@@ -62,7 +65,6 @@ class cs_mac(Thread):
         self.SIFS_time = options.sifs
         self.DIFS_time = options.difs
         self.ctl_pkt_time = options.ctl
-        self.rnd_trip_time = options.rnd_trip
         self.backoff_time_unit = options.backoff
         
         #state machine bookkeeping variables
@@ -134,12 +136,22 @@ class cs_mac(Thread):
     
     def run(self):
         last_call = time.clock()
-        while 1:
+        while not self.stopped():
             if self.next_call == "NOW" or (self.next_call != 0 and 
                                             time.clock() - last_call > self.next_call):
                 self.state_machine()
                 last_call = time.clock()
-        
+        self._done = True
+                
+    def stop(self):
+        self._stop.set()
+    
+    def stopped(self):
+        return self._stop.isSet()
+    
+    def wait(self):
+        while not self._done:
+            pass
     
     def state_machine(self):
         """
@@ -179,8 +191,8 @@ class cs_mac(Thread):
                          log_file.close()
                     self.tb.txpath.send_pkt(self.sender + self.address + "CTS")
                     self.state = 6
-                    self.next_call = self.rnd_trip_time
-                    #threading.Timer(self.rnd_trip_time, self.state_machine).start()
+                    self.next_call = self.SIFS_time + self.ctl_pkt_time
+                    #threading.Timer(self.ctl_pkt_time, self.state_machine).start()
             elif len(self.tx_queue) > 0:
                 if not self.tb.carrier_sensed() and self.tx_tries < self.packet_lifetime:
                     self.state = 2
@@ -280,8 +292,6 @@ class cs_mac(Thread):
                           help="set DIFS time [default=%default]")
         expert.add_option("", "--ctl", type="eng_float", default=.01,
                           help="set control packet time [default=%default]")
-        expert.add_option("", "--rnd-trip", type="eng_float", default=.03,
-                          help="set round trip time for RTS-CTS-data [default=%default]")
         expert.add_option("", "--backoff", type="eng_float", default=.01,
                           help="set backoff time [default=%default]")
         expert.add_option("", "--packet-lifetime", type="int", default=5,

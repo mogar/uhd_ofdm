@@ -204,7 +204,7 @@ def add_freq_option(parser):
 # /////////////////////////////////////////////////////////////////////////////
 #                                   main
 # /////////////////////////////////////////////////////////////////////////////
-pkts_rcvd = 0
+pkts_rcvd = []
 EOF_rcvd = False
 def rx_callback(payload):
     global pkts_rcvd
@@ -212,7 +212,7 @@ def rx_callback(payload):
     print payload
     if payload == "EOF":
         EOF_rcvd = True
-    pkts_rcvd += 1
+    pkts_rcvd.append(payload)
 
 
 def main():
@@ -293,15 +293,17 @@ def main():
     
     #do stuff with the measurement results
     print "this node sent ", pkts_sent, " packets"
-    print "this node rcvd ", pkts_rcvd, " packets"
-    #print "this node rcvd ", mac.rcvd_ok, " packets correctly"
-    #print "this node rcvd ", mac.rcvd_data, " data packets correctly"
-    #print "received the following packets"
-    #for item in mac.rcvd_pkts:
+    print "this node rcvd ", len(set(pkts_rcvd)), " packets"
+    print "there were ", len(pkts_rcvd) - len(set(pkts_rcvd)), " spurious packet retransmissions"
+    #for item in pkts_rcvd:
     #    print "\t", item
     #print "succesfully sent the following packets"
     #for item in mac.sent_pkts:
     #    print "\t", item
+    
+    mac.stop()
+    mac.wait()
+    
     tb.stop()     # but if it does, tell flow graph to stop.
     tb.wait()     # wait for it to finish
     
