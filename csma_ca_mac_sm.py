@@ -72,7 +72,7 @@ class cs_mac(threading.Thread):
         self.sender = None
         self.rx_callback = callback
         self.next_call = 0
-        self.lock = Lock()
+        self.lock = threading.Lock()
 
     def set_flow_graph(self, tb):
         self.tb = tb
