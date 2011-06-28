@@ -206,18 +206,26 @@ def add_freq_option(parser):
 # /////////////////////////////////////////////////////////////////////////////
 pkts_rcvd = []
 EOF_rcvd = False
+tx_failures = 0
 def rx_callback(payload):
     global pkts_rcvd
     global EOF_rcvd
+    global tx_failures
     print payload
-    if payload == "EOF":
+
+    if payload == "R:EOF":
         EOF_rcvd = True
-    pkts_rcvd.append(payload)
+    if payload[:1] == "R:":
+	    pkts_rcvd.append(payload)
+	elif payload == "T:failure":
+	    tx_failures += 1
+		
 
 
 def main():
     global pkts_rcvd
     global EOF_rcvd
+    global tx_failures
     
     parser = OptionParser (option_class=eng_option, conflict_handler="resolve")
     expert_grp = parser.add_option_group("Expert")
@@ -229,6 +237,8 @@ def main():
                       help="set number of packets to send [default=%default]")
     parser.add_option("", "--address", type="string", default = 'a',
                       help="set the address of the node (addresses are a single char) [default=%default]")
+    parser.add_option("", "--pkt-gen-time", type="eng_float", default=.5,
+                      help="set the time between sending each packet (s) [default=%default]")
     expert_grp.add_option("-c", "--carrier-threshold", type="eng_float", default=-30,
                       help="set carrier detect threshold (dB) [default=%default]")
 
@@ -289,10 +299,11 @@ def main():
             mac.new_packet('x', str(pkts_sent))    # run the tests
         pkts_sent += 1
     #while not EOF_rcvd:
-        time.sleep(.5)
+        time.sleep(options.pkt_gen_time)
     
     #do stuff with the measurement results
     print "this node sent ", pkts_sent, " packets"
+    print "there were ", tx_failures, " packets that were not successfully sent"
     print "this node rcvd ", len(set(pkts_rcvd)), " packets"
     print "there were ", len(pkts_rcvd) - len(set(pkts_rcvd)), " spurious packet retransmissions"
     #for item in pkts_rcvd:

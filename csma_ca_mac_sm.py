@@ -56,7 +56,7 @@ class cs_mac(threading.Thread):
         self.state = 0
         self.tx_tries = 0
         self.backoff = 0
-        self.CWmin = 5
+        self.CWmin = options.cw_min
         self.packet_lifetime = options.packet_lifetime
         self.address = options.address
         
@@ -136,12 +136,13 @@ class cs_mac(threading.Thread):
                     self.CTS_rcvd = True
                 elif payload == "ACK":
                 	self.ACK_rcvd = True
+                	self.rx_callback("T:" + payload)
                 else: #wait, wut?
                     self.DAT_rcvd = True
-                    self.rx_callback(payload)
+                    self.rx_callback("R:" + payload)
             else: #it's a data packet
                 self.DAT_rcvd = True
-                self.rx_callback(payload)
+                self.rx_callback("R:" + payload)
                 
             self.next_call = "NOW"
     
@@ -202,14 +203,16 @@ class cs_mac(threading.Thread):
                     self.next_call = self.DIFS_time
                     #threading.Timer(self.DIFS_time, self.state_machine).start()
                 elif self.tx_tries >= self.packet_lifetime:
-                    self.tx_queue.pop(0)
-                    self.tx_tries = 0
                     if self.verbose:
-                        print "failed to send msg: ", self.tx_queue[0]
+                        self.rx_callback("T:failure")
+                        if self.verbose:
+                            print "failed to send msg: ", self.tx_queue[0]
                     if self.log_mac:
                         log_file = open('csma_ca_mac_log.dat', 'w')
                         log_file.write("TX: f - " + self.tx_queue[0])
                         log_file.close()
+                    self.tx_queue.pop(0)
+                    self.tx_tries = 0
                 else:
                     self.next_call = self.SIFS_time
         elif self.state == 2: #done with DIFS, now backoff
@@ -290,6 +293,8 @@ class cs_mac(threading.Thread):
         """
         Adds MAC-specific options to the Options Parser
         """
+        expert.add_option("", "--cw-min", type="int", default=5,
+                          help="set minimum contention window (CWmin) [default=%default]")
         expert.add_option("", "--sifs", type="eng_float", default=.0001,
                           help="set SIFS time [default=%default]")
         expert.add_option("", "--difs", type="eng_float", default=.005,
