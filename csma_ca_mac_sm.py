@@ -203,10 +203,9 @@ class cs_mac(threading.Thread):
                     self.next_call = self.DIFS_time
                     #threading.Timer(self.DIFS_time, self.state_machine).start()
                 elif self.tx_tries >= self.packet_lifetime:
+                    self.rx_callback("T:failure")
                     if self.verbose:
-                        self.rx_callback("T:failure")
-                        if self.verbose:
-                            print "failed to send msg: ", self.tx_queue[0]
+                        print "failed to send msg: ", self.tx_queue[0]
                     if self.log_mac:
                         log_file = open('csma_ca_mac_log.dat', 'w')
                         log_file.write("TX: f - " + self.tx_queue[0])

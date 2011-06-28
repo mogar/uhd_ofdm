@@ -215,7 +215,7 @@ def rx_callback(payload):
 
     if payload == "R:EOF":
         EOF_rcvd = True
-    if payload[:1] == "R:":
+    if payload[:2] == "R:":
         pkts_rcvd.append(payload)
     elif payload == "T:failure":
         tx_failures += 1
