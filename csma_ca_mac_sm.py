@@ -138,7 +138,6 @@ class cs_mac(Thread):
             if self.next_call == "NOW" or (self.next_call != 0 and 
                                             time.clock() - last_call > self.next_call):
                 self.state_machine()
-                print "next call", self.next_call
                 last_call = time.clock()
         
     
@@ -163,8 +162,8 @@ class cs_mac(Thread):
         self.lock.acquire()
         self.next_call = 0
             
-        if self.verbose:
-            print self.state
+        #if self.verbose:
+        #    print self.state
         
         #take care of state transitions
         if self.state == 0: #idle state

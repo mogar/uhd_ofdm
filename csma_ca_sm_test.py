@@ -91,6 +91,9 @@ class usrp_graph(gr.top_block):
 
         self.connect(self.txpath, self.u_snk)
         self.connect(self.u_src, self.rx_valve, self.rxpath)
+        
+        if options.verbose:
+            self._print_verbage()
 
     def carrier_sensed(self):
         """
@@ -176,9 +179,12 @@ class usrp_graph(gr.top_block):
         """
         Prints information about the transmit path
         """
-        print "modulation:      %s"    % (self._modulator_class.__name__)
+        print
+        print "PHY parameters"
         print "samp_rate        %3d"   % (self._samp_rate)
         print "Tx Frequency:    %s"    % (eng_notation.num_to_str(self._tx_freq))
+        print "Tx antenna gain  %s"    % (self._tx_gain)
+        print "Rx antenna gain  %s"    % (self._rx_gain)
         
 def add_freq_option(parser):
     """
@@ -201,6 +207,8 @@ def add_freq_option(parser):
 pkts_rcvd = 0
 EOF_rcvd = False
 def rx_callback(payload):
+    global pkts_rcvd
+    global EOF_rcvd
     print payload
     if payload == "EOF":
         EOF_rcvd = True
@@ -208,6 +216,9 @@ def rx_callback(payload):
 
 
 def main():
+    global pkts_rcvd
+    global EOF_rcvd
+    
     parser = OptionParser (option_class=eng_option, conflict_handler="resolve")
     expert_grp = parser.add_option_group("Expert")
     parser.add_option("-m", "--modulation", type="choice", choices=['bpsk', 'qpsk'],
@@ -269,14 +280,15 @@ def main():
 
     mac.start()
     
-    while (pkts_sent < options.packets or not EOF_rcvd):
+    #while (pkts_sent < options.packets or not EOF_rcvd):
         #if options.verbose:
-        #	print "give a new packet to the MAC"
-        if pkts_sent > options.packets:
-            mac.new_packet('x', "EOF")
-        else:
-            mac.new_packet('x', str(pkts_sent))    # run the tests
-        pkts_sent += 1
+        #    print "give a new packet to the MAC"
+    #    if pkts_sent > options.packets:
+    #        mac.new_packet('x', "EOF")
+    #    else:
+    #        mac.new_packet('x', str(pkts_sent))    # run the tests
+    #    pkts_sent += 1
+    while not EOF_rcvd:
         time.sleep(.5)
     
     #do stuff with the measurement results
