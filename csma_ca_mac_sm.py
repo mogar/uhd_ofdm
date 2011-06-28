@@ -202,6 +202,7 @@ class cs_mac(threading.Thread):
                     self.next_call = self.DIFS_time
                     #threading.Timer(self.DIFS_time, self.state_machine).start()
                 elif self.tx_tries >= self.packet_lifetime:
+                    self.tx_queue.pop(0)
                     self.tx_tries = 0
                     if self.verbose:
                         print "failed to send msg: ", self.tx_queue[0]
@@ -209,7 +210,6 @@ class cs_mac(threading.Thread):
                         log_file = open('csma_ca_mac_log.dat', 'w')
                         log_file.write("TX: f - " + self.tx_queue[0])
                         log_file.close()
-                    self.tx_queue.pop(0)
                 else:
                     self.next_call = self.SIFS_time
         elif self.state == 2: #done with DIFS, now backoff
@@ -259,6 +259,7 @@ class cs_mac(threading.Thread):
             if self.ACK_rcvd == True:
                 #awesome, we're done
                 self.tx_queue.pop(0)
+                self.tx_tries = 0
             self.state = 0
             self.next_call = self.SIFS_time
         elif self.state == 6: #RTS rcvd, sent CTS

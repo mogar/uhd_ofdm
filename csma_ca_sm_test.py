@@ -280,15 +280,15 @@ def main():
 
     mac.start()
     
-    #while (pkts_sent < options.packets + 10):# or not EOF_rcvd):
+    while (pkts_sent < options.packets + 3):# or not EOF_rcvd):
         #if options.verbose:
         #    print "give a new packet to the MAC"
-   #     if pkts_sent > options.packets:
-   #         mac.new_packet('x', "EOF")
-   #     else:
-   #         mac.new_packet('x', str(pkts_sent))    # run the tests
-   #     pkts_sent += 1
-    while not EOF_rcvd:
+        if pkts_sent > options.packets:
+            mac.new_packet('x', "EOF")
+        else:
+            mac.new_packet('x', str(pkts_sent))    # run the tests
+        pkts_sent += 1
+    #while not EOF_rcvd:
         time.sleep(.5)
     
     #do stuff with the measurement results
