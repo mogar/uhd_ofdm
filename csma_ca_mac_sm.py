@@ -126,7 +126,7 @@ class cs_mac(threading.Thread):
             #question: is it possible that a packet sent from this function will 
             #interfere with a packet sent from the main_loop function?
             if self.verbose:
-                print "RX: ", payload
+                print "RX: ", payload, ", State: ", self.state
 
             #is this a ctl packet?
             if len(payload) == 3:
