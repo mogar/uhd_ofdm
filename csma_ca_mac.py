@@ -117,6 +117,7 @@ class cs_mac(object):
                     self.CTS_rcvd = True
                 #else something strange has happened
             elif payload[3:6] == "ACK":
+                print "GOT An ACK"
                 self.sent_ok += 1
                 self.ACK_rcvd = True
                 self.RTS_rcvd = False
@@ -186,11 +187,11 @@ class cs_mac(object):
             #payload = os.read(self.tun_fd, 10*1024)
             
             payload = self.generate_next_packet()
-            if payload[3:] == "EOF" and self.sent_pkts[-1] == "EOF":
+            if payload[3:] == "EOF" and len(self.sent_pkts) > 0 and self.sent_pkts[-1] == "EOF":
                 done = True
             
-            if self.verbose and payload:
-                print "packet: ", payload
+            #if self.verbose and payload:
+            #    print "packet: ", payload
                 #print "Tx: len(payload)=", len(payload)
             
             #set up bookkeeping variables for CSMA/CA
