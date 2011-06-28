@@ -280,7 +280,7 @@ def main():
 
     mac.start()
     
-    while (pkts_sent < options.packets or not EOF_rcvd):
+    while (pkts_sent < options.packets + 10):# or not EOF_rcvd):
         #if options.verbose:
         #    print "give a new packet to the MAC"
         if pkts_sent > options.packets:

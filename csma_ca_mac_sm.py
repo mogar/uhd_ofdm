@@ -74,6 +74,28 @@ class cs_mac(threading.Thread):
         self.next_call = 0
         self.lock = threading.Lock()
 
+    def run(self):
+        try:
+            last_call = time.clock()
+            while not self.stopped():
+                if self.next_call == "NOW" or (self.next_call != 0 and 
+                                               time.clock() - last_call > self.next_call):
+                    self.state_machine()
+                    last_call = time.clock()
+            self._done = True
+        except KeyboardInterrupt:
+            self._done = True
+                
+    def stop(self):
+        self._stop.set()
+    
+    def stopped(self):
+        return self._stop.isSet()
+    
+    def wait(self):
+        while not self._done:
+            pass
+            
     def set_flow_graph(self, tb):
         self.tb = tb
 
@@ -88,8 +110,8 @@ class cs_mac(threading.Thread):
         if len(payload) == 0 or (payload[1] == self.address):
             return
 
-        if self.verbose:
-            print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))
+        #if self.verbose:
+        #    print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))
         if self.log_mac:
             log_file = open('csma_ca_mac_log.dat', 'w')
             if ok:
@@ -112,11 +134,11 @@ class cs_mac(threading.Thread):
                     self.RTS_rcvd = True
                 elif payload == "CTS":
                     self.CTS_rcvd = True
+                elif payload == "ACK":
+                	self.ACK_rcvd = True
                 else: #wait, wut?
                     self.DAT_rcvd = True
                     self.rx_callback(payload)
-            elif payload[3:6] == "ACK":
-                self.ACK_rcvd = True
             else: #it's a data packet
                 self.DAT_rcvd = True
                 self.rx_callback(payload)
@@ -133,25 +155,6 @@ class cs_mac(threading.Thread):
         self.tx_queue.append(str(address) + self.address + str(data))
         if self.next_call == 0:
             self.next_call = "NOW"
-    
-    def run(self):
-        last_call = time.clock()
-        while not self.stopped():
-            if self.next_call == "NOW" or (self.next_call != 0 and 
-                                            time.clock() - last_call > self.next_call):
-                self.state_machine()
-                last_call = time.clock()
-        self._done = True
-                
-    def stop(self):
-        self._stop.set()
-    
-    def stopped(self):
-        return self._stop.isSet()
-    
-    def wait(self):
-        while not self._done:
-            pass
     
     def state_machine(self):
         """
