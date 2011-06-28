@@ -207,11 +207,14 @@ def add_freq_option(parser):
 pkts_rcvd = []
 EOF_rcvd = False
 tx_failures = 0
+num_acks = 0
 def rx_callback(payload):
     global pkts_rcvd
     global EOF_rcvd
     global tx_failures
-    print payload
+    global num_acks
+    
+    #print payload
 
     if payload == "R:EOF":
         EOF_rcvd = True
@@ -219,6 +222,8 @@ def rx_callback(payload):
         pkts_rcvd.append(payload)
     elif payload == "T:failure":
         tx_failures += 1
+    elif payload == "T:ACK":
+    	num_acks += 1
         
 
 
@@ -226,6 +231,7 @@ def main():
     global pkts_rcvd
     global EOF_rcvd
     global tx_failures
+    global num_acks
     
     parser = OptionParser (option_class=eng_option, conflict_handler="resolve")
     expert_grp = parser.add_option_group("Expert")
@@ -302,10 +308,11 @@ def main():
         time.sleep(options.pkt_gen_time)
     
     #do stuff with the measurement results
-    print "this node sent ", pkts_sent, " packets"
-    print "there were ", tx_failures, " packets that were not successfully sent"
-    print "this node rcvd ", len(set(pkts_rcvd)), " packets"
-    print "there were ", len(pkts_rcvd) - len(set(pkts_rcvd)), " spurious packet retransmissions"
+    print "this node sent:     ", pkts_sent, " packets"
+    print "there were:         ", tx_failures, " packets that were not successfully sent"
+    print "this node received: ", num_acks, " ACK packets"
+    print "this node rcvd:     ", len(set(pkts_rcvd)), " packets"
+    print "there were:         ", len(pkts_rcvd) - len(set(pkts_rcvd)), " spurious packet retransmissions"
     #for item in pkts_rcvd:
     #    print "\t", item
     #print "succesfully sent the following packets"

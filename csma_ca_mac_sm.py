@@ -262,6 +262,7 @@ class cs_mac(threading.Thread):
                 #awesome, we're done
                 self.tx_queue.pop(0)
                 self.tx_tries = 0
+                self.ACK_rcvd = False
             self.state = 0
             self.next_call = self.SIFS_time
         elif self.state == 6: #RTS rcvd, sent CTS
