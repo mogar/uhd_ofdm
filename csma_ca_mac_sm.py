@@ -44,6 +44,7 @@ class cs_mac(threading.Thread):
         #updated by Morgan Redfield on 2011 May 16
         self.verbose = options.verbose
         self.log_mac = options.log_mac
+        self.err_array = None
         self.tb = None             # top block (access to PHY)
         
         #control packet bookkeeping
@@ -99,6 +100,9 @@ class cs_mac(threading.Thread):
             
     def set_flow_graph(self, tb):
         self.tb = tb
+    
+    def set_error_array(self, array):
+    	self.err_array = array
 
     def phy_rx_callback(self, ok, payload):
         """
@@ -204,7 +208,8 @@ class cs_mac(threading.Thread):
                     self.next_call = self.DIFS_time
                     #threading.Timer(self.DIFS_time, self.state_machine).start()
                 elif self.tx_tries >= self.packet_lifetime:
-                    self.rx_callback("T:failure")
+                    if self.err_array != None:
+                        self.err_array.append(1)
                     if self.verbose:
                         print "failed to send msg: ", self.tx_queue[0]
                     if self.log_mac:
@@ -235,7 +240,6 @@ class cs_mac(threading.Thread):
                         log_file.close()
                     self.tb.txpath.send_pkt(self.tx_queue[0][0] + self.address + "RTS")
                     self.tx_tries += 1
-                    self.collisions += 1
                     self.state = 4
                     self.next_call = self.SIFS_time + self.ctl_pkt_time
                     #threading.Timer(self.SIFS_time + self.ctl_pkt_time, self.state_machine).start()
@@ -247,6 +251,7 @@ class cs_mac(threading.Thread):
                 self.next_call = self.SIFS_time
         elif self.state == 4: #RTS sent, wait for CTS
             if not self.CTS_rcvd: #timeout (or something)
+                self.collisions += 1
                 self.state = 0
                 self.next_call = self.SIFS_time
             else: #awesome, now we can send
@@ -265,6 +270,8 @@ class cs_mac(threading.Thread):
                 self.tx_queue.pop(0)
                 self.tx_tries = 0
                 self.ACK_rcvd = False
+            else:
+                self.collisions += 1
             self.state = 0
             self.next_call = self.SIFS_time
         elif self.state == 6: #RTS rcvd, sent CTS
