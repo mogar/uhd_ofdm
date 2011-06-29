@@ -243,11 +243,13 @@ def main():
                       help="set number of packets to send [default=%default]")
     parser.add_option("", "--address", type="string", default = 'a',
                       help="set the address of the node (addresses are a single char) [default=%default]")
-    parser.add_option("", "--pkt-gen-time", type="eng_float", default=.5,
-                      help="set the time between sending each packet (s) [default=%default]")
     expert_grp.add_option("-c", "--carrier-threshold", type="eng_float", default=-20,
                       help="set carrier detect threshold (dB) [default=%default]")
-
+    parser.add_option("", "--pkt-gen-time", type="eng_float", default=.5,
+                      help="set the time between sending each packet (s) [default=%default]")
+    parser.add_option("", "--pkt-padding", type="int", default=0,
+                      help="pad packet with pkt-padding number of extra chars [default=%default]")
+                      
     usrp_graph.add_options(parser, expert_grp)
     transmit_path.add_options(parser, expert_grp)
     receive_path.add_options(parser, expert_grp)
@@ -302,17 +304,20 @@ def main():
         if pkts_sent > options.packets:
             mac.new_packet('x', "EOF")
         else:
-            mac.new_packet('x', str(pkts_sent))    # run the tests
+            mac.new_packet('x', str(pkts_sent).zfill(3) + options.pkt_padding * "k")    # run the tests
         pkts_sent += 1
     #while not EOF_rcvd:
         time.sleep(options.pkt_gen_time)
     
     #do stuff with the measurement results
+    print
     print "this node sent:     ", pkts_sent, " packets"
     print "there were:         ", tx_failures, " packets that were not successfully sent"
-    print "this node received: ", num_acks, " ACK packets"
+    #print "this node received: ", num_acks, " ACK packets"
     print "this node rcvd:     ", len(set(pkts_rcvd)), " packets"
     print "there were:         ", len(pkts_rcvd) - len(set(pkts_rcvd)), " spurious packet retransmissions"
+    if options.pkt_padding != 0:
+    	print "the packets this node sent were of length: ", len(str(pkts_sent).zfill(3) + options.pkt_padding * "k") + 2 # + 2 for the address chars
     #for item in pkts_rcvd:
     #    print "\t", item
     #print "succesfully sent the following packets"
