@@ -313,6 +313,7 @@ def main():
     print
     print "this node sent:     ", pkts_sent, " packets"
     print "there were:         ", tx_failures, " packets that were not successfully sent"
+    print "collisions:         ", mac.collisions
     #print "this node received: ", num_acks, " ACK packets"
     print "this node rcvd:     ", len(set(pkts_rcvd)), " packets"
     print "there were:         ", len(pkts_rcvd) - len(set(pkts_rcvd)), " spurious packet retransmissions"

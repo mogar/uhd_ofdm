@@ -55,6 +55,7 @@ class cs_mac(threading.Thread):
         #MAC bookkeeping
         self.state = 0
         self.tx_tries = 0
+        self.collisions = 0
         self.backoff = 0
         self.CWmin = options.cw_min
         self.packet_lifetime = options.packet_lifetime
@@ -234,6 +235,7 @@ class cs_mac(threading.Thread):
                         log_file.close()
                     self.tb.txpath.send_pkt(self.tx_queue[0][0] + self.address + "RTS")
                     self.tx_tries += 1
+                    self.collisions += 1
                     self.state = 4
                     self.next_call = self.SIFS_time + self.ctl_pkt_time
                     #threading.Timer(self.SIFS_time + self.ctl_pkt_time, self.state_machine).start()
