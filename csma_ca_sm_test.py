@@ -1,40 +1,20 @@
 #!/usr/bin/env python
-#
-# Copyright 2005,2006 Free Software Foundation, Inc.
-# 
-# This file is part of GNU Radio
-# 
-# GNU Radio is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
-# 
-# GNU Radio is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with GNU Radio; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street,
-# Boston, MA 02110-1301, USA.
-# 
-
-
 # /////////////////////////////////////////////////////////////////////////////
+#                           CSMA/CA Test Script
 #
-#    This code sets up up a virtual ethernet interface (typically gr0),
-#    and relays packets between the interface and the GNU Radio PHY+MAC
+# FuNLab
+# University of Washington
+# Morgan Redfield
 #
-#    What this means in plain language, is that if you've got a couple
-#    of USRPs on different machines, and if you run this code on those
-#    machines, you can talk between them using normal TCP/IP networking.
+# This script sets up a UHD flow graph that implements OFDM TX and RX.
+# The sending and receiving of packets is managed by a CSMA/CA MAC.
+#
+# This script allows the CSMA/CA MAC to be tested in various ways.
 #
 # /////////////////////////////////////////////////////////////////////////////
 
 
 from gnuradio import gr, gru, blks2
-#updated 2011 May 27, MR
 from gnuradio import uhd
 #from gnuradio import usrp
 from gnuradio import eng_notation
@@ -94,6 +74,10 @@ class usrp_graph(gr.top_block):
         
         if options.verbose:
             self._print_verbage()
+        if options.show_rx_gain_range:
+            print "RX gain range: ", self.u_src.get_gain_range()
+        if options.show_tx_gain_range:
+            print "TX gain range: ", self.u_snk.get_gain_range()
 
     def carrier_sensed(self):
         """
@@ -162,11 +146,11 @@ class usrp_graph(gr.top_block):
                           help="set Tx frequency to FREQ [default=%default]", metavar="FREQ")
         expert.add_option("-r", "--samp_rate", type="intx", default=800000,
                            help="set sample rate for USRP to SAMP_RATE [default=%default]")
-        normal.add_option("", "--rx-gain", type="eng_float", default=17, metavar="GAIN",
+        normal.add_option("", "--rx-gain", type="eng_float", default=14, metavar="GAIN",
                           help="set receiver gain in dB [default=%default].  See also --show-rx-gain-range")
         normal.add_option("", "--show-rx-gain-range", action="store_true", default=False, 
                           help="print min and max Rx gain available")        
-        normal.add_option("", "--tx-gain", type="eng_float", default=11.5, metavar="GAIN",
+        normal.add_option("", "--tx-gain", type="eng_float", default=11.75, metavar="GAIN",
                           help="set transmitter gain in dB [default=%default].  See also --show-tx-gain-range")
         normal.add_option("", "--show-tx-gain-range", action="store_true", default=False, 
                           help="print min and max Tx gain available")
