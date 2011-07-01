@@ -82,6 +82,7 @@ def open_tun_interface(tun_device_filename):
     return (tun, ifname)
     
 
+
 # /////////////////////////////////////////////////////////////////////////////
 #                             the flow graph
 # /////////////////////////////////////////////////////////////////////////////
@@ -91,10 +92,10 @@ class usrp_graph(gr.top_block):
         gr.top_block.__init__(self)
 
         self._tx_freq            = options.tx_freq         # tranmitter's center frequency
-        self._rate               = options.rate          # interpolating rate for the USRP (prelim)
+        self._tx_gain            = options.tx_gain         # transmitter's gain
+        self._samp_rate             = options.samp_rate       # sample rate for USRP
         self._rx_freq            = options.rx_freq         # receiver's center frequency
         self._rx_gain            = options.rx_gain         # receiver's gain
-        self._tx_gain            = options.tx_gain
 
         if self._tx_freq is None:
             sys.stderr.write("-f FREQ or --freq FREQ or --tx-freq FREQ must be specified\n")
@@ -114,14 +115,19 @@ class usrp_graph(gr.top_block):
             print "Failed to set Tx frequency to %s" % (eng_notation.num_to_str(self._tx_freq),)
             raise ValueError
 
-        # copy the final answers back into options for use by modulator
-        #options.bitrate = self._bitrate
-
         self.txpath = transmit_path(options)
         self.rxpath = receive_path(callback, options)
+        self.rx_valve = gr.copy(gr.sizeof_gr_complex)
 
         self.connect(self.txpath, self.u_snk)
-        self.connect(self.u_src, self.rxpath)
+        self.connect(self.u_src, self.rx_valve, self.rxpath)
+        
+        if options.verbose:
+            self._print_verbage()
+        if options.show_rx_gain_range:
+            print "RX gain range: ", self.u_src.get_gain_range()
+        if options.show_tx_gain_range:
+            print "TX gain range: ", self.u_snk.get_gain_range()
 
     def carrier_sensed(self):
         """
@@ -134,32 +140,30 @@ class usrp_graph(gr.top_block):
         Creates a USRP sink, determines the settings for best bitrate,
         and attaches to the transmitter's subdevice.
         """
-        self.u_snk = uhd.usrp_sink(
-            device_addr = "",
-            io_type=uhd.io_type.COMPLEX_FLOAT32,
-            num_channels=1,
-        )
+        self.u_snk = uhd.usrp_sink(device_addr="", io_type=uhd.io_type.COMPLEX_FLOAT32, num_channels=1)
+        self.u_snk.set_samp_rate(self._samp_rate) 
         
-        
-        self.u_snk.set_samp_rate(self._rate)
+        self.u_snk.set_subdev_spec("", 0)
 
-        # Set the USRP for maximum transmit gain
-        # (Note that on the RFX cards this is a nop
-        gain = self.u_snk.get_gain_range()
+        g = self.u_snk.get_gain_range()
         #set the gain to the midpoint if it's currently out of bounds
-        if self._tx_gain > gain.stop() or self._tx_gain < gain.start():
-            self._tx_gain = (gain.stop() + gain.start()) / 2
-        self.set_gain(self._tx_gain)
+        if self._tx_gain > g.stop() or self._tx_gain < g.start():
+            self._tx_gain = (g.stop() + g.start()) / 2
+        self.u_snk.set_gain(self._tx_gain)
 
     def _setup_usrp_source(self):
-        self.u_src = uhd.usrp_source(
-            device_addr = "",
-            io_type=uhd.io_type.COMPLEX_FLOAT32,
-            num_channels=1,
-        )
-        self.u_src.set_samp_rate(self._rate)
+        self.u_src = uhd.usrp_source(device_addr="", io_type=uhd.io_type.COMPLEX_FLOAT32,
+                                 num_channels=1)
         self.u_src.set_antenna("TX/RX", 0)
-
+                                 
+        self.u_src.set_subdev_spec("",0)
+        self.u_src.set_samp_rate(self._samp_rate)
+        
+        g = self.u_src.get_gain_range()
+        #set the gain to the midpoint if it's currently out of bounds
+        if self._rx_gain > g.stop() or self._rx_gain < g.start():
+            self._rx_gain = (g.stop() + g.start()) / 2
+        self.u_src.set_gain(self._rx_gain)
 
     def set_freq(self, target_freq):
         """
@@ -173,18 +177,12 @@ class usrp_graph(gr.top_block):
         the result of that operation and our target_frequency to
         determine the value for the digital up converter.
         """
-        r_snk = self.u_snk.set_center_freq(target_freq)
-        r_src = self.u_src.set_center_freq(target_freq)
+        r_snk = self.u_snk.set_center_freq(target_freq, 0)
+        r_src = self.u_src.set_center_freq(target_freq, 0)
         if r_snk and r_src:
             return True
 
         return False
-        
-    def set_gain(self, gain):
-        """
-        Sets the analog gain in the USRP
-        """
-        self.u_snk.set_gain(gain)
 
     def add_options(normal, expert):
         """
@@ -192,21 +190,22 @@ class usrp_graph(gr.top_block):
         """
         add_freq_option(normal)
         normal.add_option("-v", "--verbose", action="store_true", default=False)
-        expert.add_option("", "--tx-freq", type="eng_float", default=None,
-                          help="set transmit frequency to FREQ [default=%default]", metavar="FREQ")
-        normal.add_option("", "--rx-gain", type="eng_float", default=None, metavar="GAIN",
-                          help="set receiver gain in dB [default=midpoint].  See also --show-rx-gain-range")
-        normal.add_option("", "--tx-gain", type="eng_float", default=11.5, metavar="GAIN",
-                          help="set transmitter gain in dB [default=%default].  See also --show-tx-gain-range")
-        normal.add_option("", "--show-rx-gain-range", action="store_true", default=False, 
-                          help="print min and max Rx gain available on selected daughterboard")
         expert.add_option("", "--rx-freq", type="eng_float", default=None,
                           help="set Rx frequency to FREQ [default=%default]", metavar="FREQ")
+        expert.add_option("", "--tx-freq", type="eng_float", default=None,
+                          help="set Tx frequency to FREQ [default=%default]", metavar="FREQ")
+        expert.add_option("-r", "--samp_rate", type="intx", default=800000,
+                           help="set sample rate for USRP to SAMP_RATE [default=%default]")
+        normal.add_option("", "--rx-gain", type="eng_float", default=14, metavar="GAIN",
+                          help="set receiver gain in dB [default=%default].  See also --show-rx-gain-range")
+        normal.add_option("", "--show-rx-gain-range", action="store_true", default=False, 
+                          help="print min and max Rx gain available")        
+        normal.add_option("", "--tx-gain", type="eng_float", default=11.75, metavar="GAIN",
+                          help="set transmitter gain in dB [default=%default].  See also --show-tx-gain-range")
+        normal.add_option("", "--show-tx-gain-range", action="store_true", default=False, 
+                          help="print min and max Tx gain available")
         expert.add_option("", "--snr", type="eng_float", default=30,
-                          help="set the SNR of the channel in dB [default=%default]")
-        expert.add_option("-r", "--rate", type="eng_float", default=1e6,
-                          help="set fpga sample rate to RATE [default=%default]")
-   
+                          help="set the SNR of the Rx channel in dB [default=%default]")
     # Make a static method to call before instantiation
     add_options = staticmethod(add_options)
 
@@ -214,8 +213,12 @@ class usrp_graph(gr.top_block):
         """
         Prints information about the transmit path
         """
-        print "modulation:      %s"    % (self._modulator_class.__name__)
+        print
+        print "PHY parameters"
+        print "samp_rate        %3d"   % (self._samp_rate)
         print "Tx Frequency:    %s"    % (eng_notation.num_to_str(self._tx_freq))
+        print "Tx antenna gain  %s"    % (self._tx_gain)
+        print "Rx antenna gain  %s"    % (self._rx_gain)
         
 def add_freq_option(parser):
     """

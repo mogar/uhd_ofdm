@@ -221,7 +221,7 @@ def main():
     parser.add_option("-v","--verbose", action="store_true", default=False)
     parser.add_option("-p","--packets", type="int", default = 40, 
                       help="set number of packets to send [default=%default]")
-    parser.add_option("", "--address", type="string", default = 'a',
+    parser.add_option("", "--address", type="string", default = None,
                       help="set the address of the node (addresses are a single char) [default=%default]")
     expert_grp.add_option("-c", "--carrier-threshold", type="eng_float", default=-20,
                       help="set carrier detect threshold (dB) [default=%default]")
@@ -246,6 +246,10 @@ def main():
         sys.stderr.write("You must specify -f FREQ or --freq FREQ\n")
         parser.print_help(sys.stderr)
         sys.exit(1)
+    if options.address is None:
+    	sys.stderr.write("You must specify a node address\n")
+    	parser.print_help(sys.stderr)
+    	sys.exit(1)
 
     # Attempt to enable realtime scheduling
     r = gr.enable_realtime_scheduling()
