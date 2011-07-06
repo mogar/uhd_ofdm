@@ -79,7 +79,7 @@ class cs_mac(threading.Thread):
     def run(self):
         try:
             last_call = time.clock()
-            while not self.stopped():
+            while not self.stopped() or len(self.tx_queue) > 0:
                 if self.next_call == "NOW" or (self.next_call != 0 and 
                                                time.clock() - last_call > self.next_call):
                     self.state_machine()
@@ -147,6 +147,9 @@ class cs_mac(threading.Thread):
                     self.rx_callback("R:" + payload)
             else: #it's a data packet
                 self.DAT_rcvd = True
+                log_file = open('rx_data_log.dat', 'w')
+                log_file.write(payload + "\n")
+                log_file.close()
                 self.rx_callback("R:" + payload)
                 
             self.next_call = "NOW"
@@ -183,8 +186,8 @@ class cs_mac(threading.Thread):
         self.lock.acquire()
         self.next_call = 0
             
-        #if self.verbose:
-        #    print self.state
+        if self.verbose:
+            print "S: ", self.state, ", L:", len(self.tx_queue)
         
         #take care of state transitions
         if self.state == 0: #idle state
@@ -211,13 +214,15 @@ class cs_mac(threading.Thread):
                     if self.err_array != None:
                         self.err_array.append(1)
                     if self.verbose:
-                        print "failed to send msg: ", self.tx_queue[0]
+                        print "failed to send msg: "#, self.tx_queue[0]
                     if self.log_mac:
                         log_file = open('csma_ca_mac_log.dat', 'w')
                         log_file.write("TX: f - " + self.tx_queue[0])
                         log_file.close()
                     self.tx_queue.pop(0)
                     self.tx_tries = 0
+                    if len(self.tx_queue) > 0:
+                    	self.next_call = self.SIFS_time
                 else:
                     self.next_call = self.SIFS_time
         elif self.state == 2: #done with DIFS, now backoff

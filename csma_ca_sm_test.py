@@ -294,6 +294,9 @@ def main():
         pkts_sent += 1
     #while not EOF_rcvd:
         time.sleep(options.pkt_gen_time)
+
+    mac.stop()
+    mac.wait()
     
     #do stuff with the measurement results
     print
@@ -311,8 +314,7 @@ def main():
     #for item in mac.sent_pkts:
     #    print "\t", item
     
-    mac.stop()
-    mac.wait()
+
     
     tb.stop()     # but if it does, tell flow graph to stop.
     tb.wait()     # wait for it to finish
