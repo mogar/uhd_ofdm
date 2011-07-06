@@ -79,7 +79,7 @@ class cs_mac(threading.Thread):
     def run(self):
         try:
             last_call = time.clock()
-            while not self.stopped() or len(self.tx_queue) > 0:
+            while not self.stopped(): # or len(self.tx_queue) > 0:
                 if self.next_call == "NOW" or (self.next_call != 0 and 
                                                time.clock() - last_call > self.next_call):
                     self.state_machine()

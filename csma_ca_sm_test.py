@@ -284,6 +284,7 @@ def main():
 
     mac.start()
     
+    start_time = time.clock()
     while (pkts_sent < options.packets + 3):# or not EOF_rcvd):
         #if options.verbose:
         #    print "give a new packet to the MAC"
@@ -295,6 +296,9 @@ def main():
     #while not EOF_rcvd:
         time.sleep(options.pkt_gen_time)
 
+    while time.clock() - start_time < 5*60:
+    	pass
+    
     mac.stop()
     mac.wait()
     
