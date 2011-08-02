@@ -30,7 +30,9 @@ import os
 from transmit_path import transmit_path
 from receive_path import receive_path
 #using state machine MAC, not while loop MAC (maybe this will work better?)
-from csma_ca_mac_sm import *
+from qpcsmaca_mac import *
+#spectrum sense code
+from sense_path import *
     
 
 # /////////////////////////////////////////////////////////////////////////////
@@ -43,7 +45,7 @@ class usrp_graph(gr.top_block):
 
         self._tx_freq            = options.tx_freq         # tranmitter's center frequency
         self._tx_gain            = options.tx_gain         # transmitter's gain
-        self._samp_rate             = options.samp_rate       # sample rate for USRP
+        self._samp_rate          = options.samp_rate       # sample rate for USRP
         self._rx_freq            = options.rx_freq         # receiver's center frequency
         self._rx_gain            = options.rx_gain         # receiver's gain
 
@@ -68,9 +70,16 @@ class usrp_graph(gr.top_block):
         self.txpath = transmit_path(options)
         self.rxpath = receive_path(callback, options)
         self.rx_valve = gr.copy(gr.sizeof_gr_complex)
+                
+        self.sense = sense_path(self._samp_rate, self.set_freq, options)
+        self.sense_valve = gr.copy(gr.sizeof_gr_complex)
+        
+        self.rx_valve.set_enabled(True)
+        self.sense_valve.set_enabled(False)
 
         self.connect(self.txpath, self.u_snk)
         self.connect(self.u_src, self.rx_valve, self.rxpath)
+        self.connect(self.u_src, self.sense_valve, self.sense)
         
         if options.verbose:
             self._print_verbage()
@@ -84,6 +93,13 @@ class usrp_graph(gr.top_block):
         Return True if the receive path thinks there's carrier
         """
         return self.rxpath.carrier_sensed()
+        
+    def set_rate(self, rate):
+        """
+        Set the sample rate of the USRP
+        """
+        self.u_src.set_samp_rate(rate)
+        self.u_snk.set_samp_rate(rate)
 
     def _setup_usrp_sink(self):
         """
@@ -236,6 +252,7 @@ def main():
     blks2.ofdm_mod.add_options(parser, expert_grp)
     blks2.ofdm_demod.add_options(parser, expert_grp)
     cs_mac.add_options(parser, expert_grp)
+    sense_path.add_options(parser, expert_grp)
 
     (options, args) = parser.parse_args ()
     if len(args) != 0:
@@ -296,8 +313,8 @@ def main():
     #while not EOF_rcvd:
     #    time.sleep(options.pkt_gen_time)
 
-    while time.clock() - start_time < 10*60:
-    	pass
+    while time.clock() - start_time < 40:#10*60:
+     	pass
     
     mac.stop()
     mac.wait()
