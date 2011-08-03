@@ -235,15 +235,15 @@ def main():
                       default='bpsk',
                       help="Select modulation from: bpsk, qpsk [default=%%default]")
     parser.add_option("-v","--verbose", action="store_true", default=False)
-    parser.add_option("-p","--packets", type="int", default = 40, 
+    parser.add_option("-p","--packets", type="int", default = 3000, 
                       help="set number of packets to send [default=%default]")
     parser.add_option("", "--address", type="string", default = None,
                       help="set the address of the node (addresses are a single char) [default=%default]")
     expert_grp.add_option("-c", "--carrier-threshold", type="eng_float", default=-20,
                       help="set carrier detect threshold (dB) [default=%default]")
-    parser.add_option("", "--pkt-gen-time", type="eng_float", default=.5,
+    parser.add_option("", "--pkt-gen-time", type="eng_float", default=.05,
                       help="set the time between sending each packet (s) [default=%default]")
-    parser.add_option("", "--pkt-padding", type="int", default=0,
+    parser.add_option("", "--pkt-padding", type="int", default=1000,
                       help="pad packet with pkt-padding number of extra chars [default=%default]")
                       
     usrp_graph.add_options(parser, expert_grp)

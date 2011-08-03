@@ -78,7 +78,7 @@ class cs_mac(threading.Thread):
         self.thresh_qp = options.thresh_qp
         self.sense_time = options.quiet_period
         self.quiet_period = int(self.sense_time/self.backoff_time_unit)
-        print "quiet period is ", self.quiet_period, " backoff units"
+        #print "quiet period is ", self.quiet_period, " backoff units"
         
         self.k = 0
         
@@ -90,8 +90,8 @@ class cs_mac(threading.Thread):
         self.lock = threading.Lock()
         
         #test stuff, remove this before actually running the MAC
-        self.backoff_times = []
-        self.ready_to_backoff = 0
+        #self.backoff_times = []
+        #self.ready_to_backoff = 0
 
     def run(self):
         try:
@@ -108,16 +108,18 @@ class cs_mac(threading.Thread):
                 if self.next_call == "QP":
                     self.next_call = self.sense_time
                     occupied = self.sense_current_freq(0)
-                    while time.clock() - last_call < self.next_call:
+                    while self.next_call != "NOW" and time.clock() - last_call < self.next_call:
                         pass
                 if self.next_call == "NOW" or (self.next_call != 0 and 
                                                time.clock() - last_call > self.next_call):
+                    print "calling sm"
                     self.state_machine()
                     last_call = time.clock()
             #print "avg sense time is ",  sum(times)/len(times)
             #print "max sense time is ", max(times)
-            print "avg backoff time slot is ", sum(self.backoff_times)/len(self.backoff_times)
-            print "max backoff time is ", max(self.backoff_times)
+            #print "avg backoff time slot is ", sum(self.backoff_times)/len(self.backoff_times)
+            #print "max backoff time is ", max(self.backoff_times)
+            print "done with sm"
             self._done = True
         except KeyboardInterrupt:
             self._done = True
@@ -250,7 +252,7 @@ class cs_mac(threading.Thread):
             self.sender = payload[1]
             payload = payload[2:]
             if self.verbose:
-                print "RX: ", payload, ", State: ", self.state
+                print "RX: ", payload, ", State: ", self.state, ", backoff: ", self.backoff, ", next call: ", self.next_call
 
             #is this a ctl packet?
             if len(payload) == 3:
@@ -334,7 +336,7 @@ class cs_mac(threading.Thread):
                     self.next_call = self.SIFS_time
         elif self.state == 2: #done with DIFS, now backoff
             if cb and not self.tb.carrier_sensed():
-                if self.backoff == 0:
+                if self.backoff <= 0:
                     self.backoff = random.randrange(0, 2**self.tx_tries * self.CWmin, 1)
                 elif self.backoff > self.quiet_period:
                     #TODO: what to do here? a backoff was interrupted, but there's not enough time
@@ -352,7 +354,7 @@ class cs_mac(threading.Thread):
             if cb and not self.tb.carrier_sensed():
                 self.backoff -= 1
                 if self.backoff <= 0:
-                    self.ready_to_backoff = 0
+                    #self.ready_to_backoff = 0
                     if self.log_mac:
                         log_file = open('csma_ca_mac_log.dat', 'w')
                         log_file.write("TX:" + self.tx_queue[0][0] + self.address + "RTS")
@@ -362,9 +364,9 @@ class cs_mac(threading.Thread):
                     self.state = 4
                     self.next_call = self.SIFS_time + self.ctl_pkt_time
                 else:
-                    if self.ready_to_backoff != 0:
-                        self.backoff_times.append(time.clock() - self.ready_to_backoff)
-                    self.ready_to_backoff = time.clock()
+                    #if self.ready_to_backoff != 0:
+                        #self.backoff_times.append(time.clock() - self.ready_to_backoff)
+                    #self.ready_to_backoff = time.clock()
                     
                     self.next_call = self.backoff_time_unit
             else:
