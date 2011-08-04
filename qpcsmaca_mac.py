@@ -92,6 +92,7 @@ class cs_mac(threading.Thread):
         #test stuff, remove this before actually running the MAC
         #self.backoff_times = []
         #self.ready_to_backoff = 0
+        self.nominal_freq = options.tx_freq
 
     def run(self): #becomes a thread with mac.start() is called
         try:
@@ -200,7 +201,7 @@ class cs_mac(threading.Thread):
                     best_freq.append([m.center_freq, fft_sum_db])
         best_freq = best_freq[0] #just choose the first good channel
         print "choosing frequency ", best_freq[0], " with noise floor", best_freq[1]
-        self.tb.set_freq(best_freq[0])
+        self.tb.set_freq(self.nominal_freq)#(best_freq[0])
         self.prep_to_txrx()
         return best_freq
 		
