@@ -86,6 +86,8 @@ class sense_path(gr.hier_block2):
         self.min_freq = options.start_freq
         self.max_freq = options.end_freq
         self.hold_freq = False
+        
+        self.num_channels = (self.max_freq - self.min_freq)/self.usrp_rate
 
         if self.min_freq > self.max_freq:
             self.min_freq, self.max_freq = self.max_freq, self.min_freq   # swap them

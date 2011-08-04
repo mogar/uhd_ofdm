@@ -93,7 +93,7 @@ class cs_mac(threading.Thread):
         #self.backoff_times = []
         #self.ready_to_backoff = 0
 
-    def run(self):
+    def run(self): #becomes a thread with mac.start() is called
         try:
             #times = []
             last_call = time.clock()
@@ -108,18 +108,16 @@ class cs_mac(threading.Thread):
                 if self.next_call == "QP":
                     self.next_call = self.sense_time
                     occupied = self.sense_current_freq(0)
-                    while self.next_call != "NOW" and time.clock() - last_call < self.next_call:
+                    while self.next_call != "NOW" and (time.clock() - last_call < self.next_call):
                         pass
                 if self.next_call == "NOW" or (self.next_call != 0 and 
                                                time.clock() - last_call > self.next_call):
-                    print "calling sm"
                     self.state_machine()
                     last_call = time.clock()
             #print "avg sense time is ",  sum(times)/len(times)
             #print "max sense time is ", max(times)
             #print "avg backoff time slot is ", sum(self.backoff_times)/len(self.backoff_times)
             #print "max backoff time is ", max(self.backoff_times)
-            print "done with sm"
             self._done = True
         except KeyboardInterrupt:
             self._done = True
@@ -181,12 +179,12 @@ class cs_mac(threading.Thread):
     def find_best_freq(self):
         self.prep_to_sense(False)
         best_freq = [0, 0]
-        #TODO: fix this so that all channels are tested once only
-        while i < 9*self.tb.num_tests:
+        i = 0
+        while i < self.tb.sense.num_channels:
             i = i+1
             # Get the next message sent from the C++ code (blocking call).
             # It contains the center frequency and the mag squared of the fft
-            m = parse_msg(self.tb.msgq.delete_head())
+            m = parse_msg(self.tb.sense.msgq.delete_head())
         
             #fft_sum_db = 20*math.log10(sum(m.data)/m.vlen)
             temp_list = []
@@ -194,11 +192,15 @@ class cs_mac(threading.Thread):
                 temp_list.append(10*math.log10(item) + self.k)
             fft_sum_db = sum(temp_list)/m.vlen
 		    
-            if fft_sum_db < best_freq[1] or best_freq[1] == 0:
+            #skip the first and last channels to account for noise at the edges
+            if i == 1 or i >= self.tb.sense.num_channels:
+                pass
+            elif fft_sum_db < best_freq[1] or best_freq[1] == 0:
                 best_freq = [m.center_freq, fft_sum_db]
-		print "choosing frequency ", best_freq[0], " with noise floor", best_freq[1]
-		self.tb.set_freq(best_freq[0])
+        print "choosing frequency ", best_freq[0], " with noise floor", best_freq[1]
+        self.tb.set_freq(best_freq[0])
         self.prep_to_txrx()
+        return best_freq
 		
     def sense_current_freq(self, time):
         """
