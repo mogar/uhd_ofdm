@@ -178,7 +178,7 @@ class cs_mac(threading.Thread):
         
     def find_best_freq(self):
         self.prep_to_sense(False)
-        best_freq = [0, 0]
+        best_freq = []
         i = 0
         while i < self.tb.sense.num_channels:
             i = i+1
@@ -195,8 +195,10 @@ class cs_mac(threading.Thread):
             #skip the first and last channels to account for noise at the edges
             if i == 1 or i >= self.tb.sense.num_channels:
                 pass
-            elif fft_sum_db < best_freq[1] or best_freq[1] == 0:
-                best_freq = [m.center_freq, fft_sum_db]
+            else: #elif fft_sum_db < best_freq[1] or best_freq[1] == 0:
+                if fft_sum_db < self.thresh_primary:
+                    best_freq.append([m.center_freq, fft_sum_db])
+        best_freq = best_freq[0] #just choose the first good channel
         print "choosing frequency ", best_freq[0], " with noise floor", best_freq[1]
         self.tb.set_freq(best_freq[0])
         self.prep_to_txrx()
@@ -443,11 +445,11 @@ class cs_mac(threading.Thread):
                           help="set sample rate for USRP to SAMP_RATE [default=%default]")
         expert.add_option("", "--channel_rate", type="intx", default=6250000,
                           help="set channel rate for USRP spectrum sense to SAMP_RATE [default=%default]")
-        expert.add_option("", "--thresh_primary", type="eng_float", default=-90,
+        expert.add_option("", "--thresh_primary", type="eng_float", default=-50,
                           help="set primary detection threshold [default=%default]")
         expert.add_option("", "--thresh_second", type="eng_float", default=-60,
                           help="set secondary detection threshold [default=%default]")
-        expert.add_option("", "--thresh_qp", type="eng_float", default=-40,
+        expert.add_option("", "--thresh_qp", type="eng_float", default=-80,
                           help="set qpCSMA/CA detection threshold [default=%default]")
         expert.add_option("", "--quiet-period", type="eng_float", default=.03,
                           help="set quiet period length in seconds [default=%default]")                          
