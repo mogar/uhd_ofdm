@@ -431,7 +431,7 @@ class cs_mac(threading.Thread):
         """
         Adds MAC-specific options to the Options Parser
         """
-        expert.add_option("", "--cw-min", type="int", default=5,
+        expert.add_option("", "--cw-min", type="int", default=2,
                           help="set minimum contention window (CWmin) [default=%default]")
         expert.add_option("", "--sifs", type="eng_float", default=.0002,
                           help="set SIFS time [default=%default]")
@@ -439,7 +439,7 @@ class cs_mac(threading.Thread):
         #                  help="set DIFS time [default=%default]")
         expert.add_option("", "--ctl", type="eng_float", default=.04,
                           help="set control packet time [default=%default]")
-        expert.add_option("", "--backoff", type="eng_float", default=.001,
+        expert.add_option("", "--backoff", type="eng_float", default=.005,
                           help="set backoff time [default=%default]")
         expert.add_option("", "--packet-lifetime", type="int", default=5,
                           help="set number of attempts to send each packet [default=%default]")
