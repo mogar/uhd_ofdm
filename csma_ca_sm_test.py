@@ -296,11 +296,12 @@ def main():
     #while not EOF_rcvd:
     #    time.sleep(options.pkt_gen_time)
 
-    while time.clock() - start_time < 40:#10*60:
+    while time.clock() - start_time < 10*60:
     	pass
     
     mac.stop()
     mac.wait()
+    print "total txrx time:    ", time.clock() - start_time
     
     #do stuff with the measurement results
     print

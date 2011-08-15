@@ -299,8 +299,9 @@ def main():
 
     tb.start()    # Start executing the flow graph (runs in separate threads)
 
-    mac.find_best_freq()
-    raw_input("Press Enter to begin transmitting") 
+    #TODO: find_best_freq is broken, include this when it is fixed
+    #mac.find_best_freq()
+    #raw_input("Press Enter to begin transmitting") 
 
     mac.start()
     

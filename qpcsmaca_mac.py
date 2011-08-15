@@ -79,6 +79,8 @@ class cs_mac(threading.Thread):
         self.sense_time = options.quiet_period
         self.quiet_period = int(self.sense_time/self.backoff_time_unit)
         #print "quiet period is ", self.quiet_period, " backoff units"
+        self.qp_interval = options.qp_interval
+        self.qp_counter = 0
         
         self.k = 0
         
@@ -105,10 +107,9 @@ class cs_mac(threading.Thread):
                 #times.append(time.clock() - last_call)
                 
                 #i += 1
-                #TODO: update this sense_current_freq call, it's not satisfactory now
                 if self.next_call == "QP":
                     self.next_call = self.sense_time
-                    occupied = self.sense_current_freq(0)
+                    occupied = self.sense_current_freq(0) #TODO: do something with occupied
                     while self.next_call != "NOW" and (time.clock() - last_call < self.next_call):
                         pass
                 if self.next_call == "NOW" or (self.next_call != 0 and 
@@ -178,6 +179,8 @@ class cs_mac(threading.Thread):
         self.tb.rx_valve.set_enabled(True)
         
     def find_best_freq(self):
+        #TODO: This doesn't work. The best frequency is found, but switching to that
+        #frequency causes no packets to be received at either end. Fix this.
         self.prep_to_sense(False)
         best_freq = []
         i = 0
@@ -201,7 +204,7 @@ class cs_mac(threading.Thread):
                     best_freq.append([m.center_freq, fft_sum_db])
         best_freq = best_freq[0] #just choose the first good channel
         print "choosing frequency ", best_freq[0], " with noise floor", best_freq[1]
-        self.tb.set_freq(self.nominal_freq)#(best_freq[0])
+        self.tb.set_freq(int(best_freq[0]))
         self.prep_to_txrx()
         return best_freq
 		
@@ -323,6 +326,7 @@ class cs_mac(threading.Thread):
             elif len(self.tx_queue) > 0:
                 if not self.tb.carrier_sensed() and self.tx_tries < self.packet_lifetime:
                     self.state = 2
+                    self.qp_counter = (self.qp_counter + 1) % self.qp_interval
                     self.next_call = self.DIFS_time
                 elif self.tx_tries >= self.packet_lifetime:
                     if self.err_array != None:
@@ -343,15 +347,14 @@ class cs_mac(threading.Thread):
             if cb and not self.tb.carrier_sensed():
                 if self.backoff <= 0:
                     self.backoff = random.randrange(0, 2**self.tx_tries * self.CWmin, 1)
-                elif self.backoff > self.quiet_period:
-                    #TODO: what to do here? a backoff was interrupted, but there's not enough time
-                    #to finish off the backoff. Do I now add on enough to bring this up to QP?
-                    #
-                    #This is currently being dealt with by making the sense time it's own time slot
-                    #there are two ways to deal with this, figure out which to use.
-                    self.backoff = self.backoff - self.quiet_period
+                #elif self.backoff > self.quiet_period:
+                    #TODO: Make sure this way of dealing with backoff and qp fits Chitto's algorithm
+                #    self.backoff = self.backoff - self.quiet_period
                 self.state = 3
-                self.next_call = "QP"#self.backoff_time_unit
+                if self.qp_counter == 0:
+                    self.next_call = "QP"
+                else:
+                    self.next_call = self.backoff_time_unit
             else:
                 self.state = 0
                 self.next_call = "NOW"
@@ -453,6 +456,8 @@ class cs_mac(threading.Thread):
         expert.add_option("", "--thresh_qp", type="eng_float", default=-80,
                           help="set qpCSMA/CA detection threshold [default=%default]")
         expert.add_option("", "--quiet-period", type="eng_float", default=.03,
-                          help="set quiet period length in seconds [default=%default]")                          
+                          help="set quiet period length in seconds [default=%default]") 
+        expert.add_option("", "--qp-interval", type="int", default=1,
+                          help="set number of DIFS between qp [default=%default]") 
     # Make a static method to call before instantiation
     add_options = staticmethod(add_options)
