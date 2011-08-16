@@ -98,7 +98,8 @@ class cs_mac(threading.Thread):
 
     def run(self): #becomes a thread with mac.start() is called
         try:
-            #times = []
+            times = []
+            last_sense = time.clock()
             last_call = time.clock()
             #i = 0
             while not self.stopped(): # or len(self.tx_queue) > 0:
@@ -109,6 +110,8 @@ class cs_mac(threading.Thread):
                 #i += 1
                 if self.next_call == "QP":
                     self.next_call = self.sense_time
+                    times.append(time.clock() - last_sense)
+                    last_sense = time.clock()
                     occupied = self.sense_current_freq(0) #TODO: do something with occupied
                     while self.next_call != "NOW" and (time.clock() - last_call < self.next_call):
                         pass
@@ -120,6 +123,14 @@ class cs_mac(threading.Thread):
             #print "max sense time is ", max(times)
             #print "avg backoff time slot is ", sum(self.backoff_times)/len(self.backoff_times)
             #print "max backoff time is ", max(self.backoff_times)
+            mean = sum(times)/len(times)
+            print
+            print "avg time between sensing is: ", mean
+            variance = 0
+            for value in times:
+                variance += (value - mean)**2
+            variance = variance/(len(times) - 1)
+            print "variance of sensing periods:  ", variance
             self._done = True
         except KeyboardInterrupt:
             self._done = True
