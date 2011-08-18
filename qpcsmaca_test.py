@@ -245,6 +245,8 @@ def main():
                       help="set the time between sending each packet (s) [default=%default]")
     parser.add_option("", "--pkt-padding", type="int", default=1000,
                       help="pad packet with pkt-padding number of extra chars [default=%default]")
+    parser.add_option("","--autoselect-freq", action="store_true", default=False)
+
                       
     usrp_graph.add_options(parser, expert_grp)
     transmit_path.add_options(parser, expert_grp)
@@ -300,8 +302,9 @@ def main():
     tb.start()    # Start executing the flow graph (runs in separate threads)
 
     #TODO: find_best_freq is broken, include this when it is fixed
-    mac.find_best_freq()
-    raw_input("Press Enter to begin transmitting") 
+    if options.autoselect_freq:
+        mac.find_best_freq()
+        raw_input("Press Enter to begin transmitting") 
 
     mac.start()
     
@@ -317,7 +320,7 @@ def main():
     #while not EOF_rcvd:
     #    time.sleep(options.pkt_gen_time)
 
-    while time.clock() - start_time < 10:#10*60:
+    while time.clock() - start_time < 60:#10*60:
      	pass
     
     mac.stop()
