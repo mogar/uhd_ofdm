@@ -300,8 +300,8 @@ def main():
     tb.start()    # Start executing the flow graph (runs in separate threads)
 
     #TODO: find_best_freq is broken, include this when it is fixed
-    #mac.find_best_freq()
-    #raw_input("Press Enter to begin transmitting") 
+    mac.find_best_freq()
+    raw_input("Press Enter to begin transmitting") 
 
     mac.start()
     
@@ -317,7 +317,7 @@ def main():
     #while not EOF_rcvd:
     #    time.sleep(options.pkt_gen_time)
 
-    while time.clock() - start_time < 10*60:
+    while time.clock() - start_time < 10:#10*60:
      	pass
     
     mac.stop()

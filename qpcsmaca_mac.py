@@ -42,10 +42,12 @@ class cs_mac(threading.Thread):
         self._stop = threading.Event()
         self._done = False
         
-        #updated by Morgan Redfield on 2011 May 16
+        #logging variables
         self.verbose = options.verbose
         self.log_mac = options.log_mac
-        self.tb = None             # top block (access to PHY)
+        
+        # top block (access to PHY)
+        self.tb = None             
         
         #MAC bookkeeping
         self.state = 0
@@ -71,24 +73,25 @@ class cs_mac(threading.Thread):
         self.backoff_time_unit = options.backoff
         
         #spectrum sense parameters
-        self.txrx_rate = options.samp_rate
-        self.channel_rate = options.channel_rate
+        self.txrx_rate = options.samp_rate #transmit and receive bandwidth
+        self.channel_rate = options.channel_rate #bandwidth of channel
         self.thresh_primary = options.thresh_primary
         self.thresh_second = options.thresh_second
         self.thresh_qp = options.thresh_qp
         self.sense_time = options.quiet_period
-        self.quiet_period = int(self.sense_time/self.backoff_time_unit)
+        self.quiet_period = int(self.sense_time/self.backoff_time_unit) #backoff units for quiet period
         #print "quiet period is ", self.quiet_period, " backoff units"
         self.qp_interval = options.qp_interval
-        self.qp_counter = 0
+        self.qp_counter = 0 #keep track of when we're at the qp interval
         
+        #used in calculating the avg power in dB
         self.k = 0
         
         #state machine bookkeeping variables
         self.tx_queue = []
         self.sender = None
-        self.rx_callback = callback
-        self.next_call = 0
+        self.rx_callback = callback #what to do when we receive a data packet
+        self.next_call = 0 #when to activate the MAC state machine again
         self.lock = threading.Lock()
         
         #test stuff, remove this before actually running the MAC
@@ -97,11 +100,16 @@ class cs_mac(threading.Thread):
         self.nominal_freq = options.tx_freq
 
     def run(self): #becomes a thread with mac.start() is called
+        """
+        Manages calls to the state machine at the proper times. This allows the 
+        state machine to be fairly time agnostic.
+        """
         try:
             times = []
             last_sense = time.clock()
             last_call = time.clock()
             #i = 0
+            #do this until we get stopped by the host
             while not self.stopped(): # or len(self.tx_queue) > 0:
                 #last_call = time.clock()
                 #self.sense_current_freq(0)
@@ -109,16 +117,30 @@ class cs_mac(threading.Thread):
                 
                 #i += 1
                 if self.next_call == "QP":
+                    #it's time to sense the spectrum
                     self.next_call = self.sense_time
+                    
+                    #test code (measure time between senses)
                     times.append(time.clock() - last_sense)
                     last_sense = time.clock()
+                    
                     occupied = self.sense_current_freq(0) #TODO: do something with occupied
+                    if occupied:
+                        print "occupied is ", occupied
+                        if occupied == 1: #one means a primary is using the channel
+                            #change channels
+                            print "changing channel"
+                            #new_freq = self.find_best_freq()
+                            #print "switching to ", new_freq
                     while self.next_call != "NOW" and (time.clock() - last_call < self.next_call):
+                        #if sensing didn't take a long as we thought it would, wait for a while
                         pass
                 if self.next_call == "NOW" or (self.next_call != 0 and 
                                                time.clock() - last_call > self.next_call):
+                    #run the MAC state machine
                     self.state_machine()
                     last_call = time.clock()
+            #Measurement code
             #print "avg sense time is ",  sum(times)/len(times)
             #print "max sense time is ", max(times)
             #print "avg backoff time slot is ", sum(self.backoff_times)/len(self.backoff_times)
@@ -136,16 +158,32 @@ class cs_mac(threading.Thread):
             self._done = True
                 
     def stop(self):
+        """
+        Called from an outside process to stop the state machine.
+        This function does not stop the MAC, it just alerts the MAC that it 
+        should stop when it's most convenient.
+        """
         self._stop.set()
     
     def stopped(self):
+        """
+        Returns a true/false value that determines whether 
+        """
         return self._stop.isSet()
     
     def wait(self):
+        """
+        Waits until the state machine is stopped and then returns.
+        """
         while not self._done:
             pass
             
     def set_flow_graph(self, tb):
+        """
+        Gives the MAC access to the PHY.
+        
+        @param tb: the top block of the GNURadio flowgraph representing the PHY
+        """
         self.tb = tb
         mywindow = window.blackmanharris(self.tb.sense.fft_size)
         power = 0
@@ -168,6 +206,11 @@ class cs_mac(threading.Thread):
             self.next_call = "NOW"
     
     def prep_to_sense(self, hold_freq):
+        """
+        Prepare the PHY to sense the spectrum.
+        
+        @param hold_freq: determines whether the PHY will switch channels as it sense or only sense the current channel.
+        """
         #set frequency hold
         self.tb.sense.set_hold_freq(hold_freq)
         #stop rcving
@@ -180,6 +223,9 @@ class cs_mac(threading.Thread):
         self.tb.sense_valve.set_enabled(True)
     
     def prep_to_txrx(self):
+        """
+        Prepare the PHY to transmit and receive data
+        """
         #done sensing
         self.tb.sense_valve.set_enabled(False)
         #flush the queue
@@ -190,6 +236,10 @@ class cs_mac(threading.Thread):
         self.tb.rx_valve.set_enabled(True)
         
     def find_best_freq(self):
+        """
+        Gather spectrum sense data and interpret it to find the frequency with the lowest noise
+        floor.
+        """
         #TODO: This doesn't work. The best frequency is found, but switching to that
         #frequency causes no packets to be received at either end. Fix this.
         self.prep_to_sense(False)
@@ -215,13 +265,15 @@ class cs_mac(threading.Thread):
                     best_freq.append([m.center_freq, fft_sum_db])
         best_freq = best_freq[0] #just choose the first good channel
         print "choosing frequency ", best_freq[0], " with noise floor", best_freq[1]
-        self.tb.set_freq(int(best_freq[0]))
+        print self.tb.set_freq(int(best_freq[0]))
         self.prep_to_txrx()
         return best_freq
 		
     def sense_current_freq(self, time):
         """
-        sense the spectrum and look for a primary user
+        sense the current channel and look for a primary user
+        
+        @param time: TODO figure out what to do with this
         """
         self.prep_to_sense(True)
         #do the sensing
@@ -235,11 +287,12 @@ class cs_mac(threading.Thread):
         
         #do threshold comparisons
         ret_val = 0
-        if fft_sum_db < self.thresh_primary:
+        if fft_sum_db > self.thresh_primary:
+            print fft_sum_db
             ret_val = 1
-        elif fft_sum_db < self.thresh_second:
+        elif fft_sum_db > self.thresh_second:
             ret_val = 2
-        elif fft_sum_db < self.thresh_qp:
+        elif fft_sum_db > self.thresh_qp:
             ret_val = 3
         
         self.prep_to_txrx()
@@ -268,6 +321,7 @@ class cs_mac(threading.Thread):
             log_file.close()
             
         if ok:
+            #the packet probably isn't corrupted and it's not from this node
             self.sender = payload[1]
             payload = payload[2:]
             if self.verbose:
@@ -282,7 +336,7 @@ class cs_mac(threading.Thread):
                 elif payload == "ACK":
                     self.ACK_rcvd = True
                     self.rx_callback("T:" + payload)
-                else: #wait, wut?
+                else: #wait, wut? it's a very short data packet?
                     self.DAT_rcvd = True
                     self.rx_callback("R:" + payload)
             else: #it's a data packet
@@ -293,11 +347,14 @@ class cs_mac(threading.Thread):
                     log_file.close()
                 self.rx_callback("R:" + payload)
                 
+            #we got a packet, make sure that the MAC state machine can do something with it
+            #as soon as possible.
             self.next_call = "NOW"
     
     def state_machine(self):
         """
-        Main loop for MAC.
+        State machine for qpCSMA/CA MAC.
+        
         States
         0 - idle
         1 - RTS
@@ -321,12 +378,12 @@ class cs_mac(threading.Thread):
         
         #take care of state transitions
         if self.state == 0: #idle state
-            if self.RTS_rcvd:
+            if self.RTS_rcvd: #someone wants to send to us
                 self.RTS_rcvd = False
-                if self.tb.carrier_sensed():
+                if self.tb.carrier_sensed(): #they can't send because someone else is talking
                     #do nothing and remain in the idle state if we can't do a CTS
                     self.next_call = self.SIFS_time
-                else:
+                else: #they can send, so give them a CTS
                     if self.log_mac:
                          log_file = open('csma_ca_mac_log.dat', 'w')
                          log_file.write("TX:" + self.sender + self.address + "CTS")
@@ -334,7 +391,7 @@ class cs_mac(threading.Thread):
                     self.tb.txpath.send_pkt(self.sender + self.address + "CTS")
                     self.state = 6
                     self.next_call = self.SIFS_time + self.ctl_pkt_time
-            elif len(self.tx_queue) > 0:
+            elif len(self.tx_queue) > 0: #nobody wants to send to us and we want to send
                 if not self.tb.carrier_sensed() and self.tx_tries < self.packet_lifetime:
                     self.state = 2
                     self.qp_counter = (self.qp_counter + 1) % self.qp_interval
@@ -355,7 +412,7 @@ class cs_mac(threading.Thread):
                 else:
                     self.next_call = self.SIFS_time
         elif self.state == 2: #done with DIFS, now backoff
-            if cb and not self.tb.carrier_sensed():
+            if cb and not self.tb.carrier_sensed(): #we're still ok, so keep backing off
                 if self.backoff <= 0:
                     self.backoff = random.randrange(0, 2**self.tx_tries * self.CWmin, 1)
                 #elif self.backoff > self.quiet_period:
@@ -366,11 +423,11 @@ class cs_mac(threading.Thread):
                     self.next_call = "QP"
                 else:
                     self.next_call = self.backoff_time_unit
-            else:
+            else: #something happened (like we rx'd a packet), so go back to start state
                 self.state = 0
                 self.next_call = "NOW"
         elif self.state == 3: #backoff state
-            if cb and not self.tb.carrier_sensed():
+            if cb and not self.tb.carrier_sensed(): #we're still ok, so keep backing off
                 self.backoff -= 1
                 if self.backoff <= 0:
                     #self.ready_to_backoff = 0
@@ -388,7 +445,7 @@ class cs_mac(threading.Thread):
                     #self.ready_to_backoff = time.clock()
                     
                     self.next_call = self.backoff_time_unit
-            else:
+            else: #something happened while we were backing off, go back to start state
                 self.state = 0
                 self.next_call = "NOW"
         elif self.state == 4: #RTS sent, wait for CTS
@@ -411,7 +468,7 @@ class cs_mac(threading.Thread):
                 self.tx_queue.pop(0)
                 self.tx_tries = 0
                 self.ACK_rcvd = False
-            else:
+            else: #we didn't get an ACK, so keep trying
                 self.collisions += 1
             self.state = 0
             self.next_call = "NOW"
