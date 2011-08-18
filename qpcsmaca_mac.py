@@ -125,13 +125,11 @@ class cs_mac(threading.Thread):
                     last_sense = time.clock()
                     
                     occupied = self.sense_current_freq(0) #TODO: do something with occupied
-                    if occupied:
-                        print "occupied is ", occupied
-                        if occupied == 1: #one means a primary is using the channel
-                            #change channels
-                            print "changing channel"
-                            #new_freq = self.find_best_freq()
-                            #print "switching to ", new_freq
+                    if occupied == 1: #one means a primary is using the channel
+                        #change channels
+                        print "changing channel"
+                        #new_freq = self.find_best_freq()
+                        #print "switching to ", new_freq
                     while self.next_call != "NOW" and (time.clock() - last_call < self.next_call):
                         #if sensing didn't take a long as we thought it would, wait for a while
                         pass
