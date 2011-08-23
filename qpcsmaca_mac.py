@@ -112,7 +112,7 @@ class cs_mac(threading.Thread):
             #do this until we get stopped by the host
             while not self.stopped(): # or len(self.tx_queue) > 0:
                 #last_call = time.clock()
-                #self.sense_current_freq(0)
+                #self.sense_current_freq()
                 #times.append(time.clock() - last_call)
                 
                 #i += 1
@@ -124,12 +124,12 @@ class cs_mac(threading.Thread):
                     times.append(time.clock() - last_sense)
                     last_sense = time.clock()
                     
-                    occupied = self.sense_current_freq(0) #TODO: do something with occupied
+                    occupied = self.sense_current_freq()
                     if occupied == 1: #one means a primary is using the channel
                         #change channels
                         print "changing channel"
-                        #new_freq = self.find_best_freq()
-                        #print "switching to ", new_freq
+                        new_freq = self.find_best_freq()
+                        print "switching to ", new_freq
                     while self.next_call != "NOW" and (time.clock() - last_call < self.next_call):
                         #if sensing didn't take a long as we thought it would, wait for a while
                         pass
@@ -238,8 +238,6 @@ class cs_mac(threading.Thread):
         Gather spectrum sense data and interpret it to find the frequency with the lowest noise
         floor.
         """
-        #TODO: This doesn't work. The best frequency is found, but switching to that
-        #frequency causes no packets to be received at either end. Fix this.
         self.prep_to_sense(False)
         best_freq = []
         i = 0
@@ -268,11 +266,9 @@ class cs_mac(threading.Thread):
         self.prep_to_txrx()
         return best_freq
 		
-    def sense_current_freq(self, time):
+    def sense_current_freq(self):
         """
         sense the current channel and look for a primary user
-        
-        @param time: TODO figure out what to do with this
         """
         self.prep_to_sense(True)
         #do the sensing
