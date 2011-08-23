@@ -260,7 +260,7 @@ class cs_mac(threading.Thread):
                     best_freq.append([m.center_freq, fft_sum_db])
         best_freq = best_freq[0] #just choose the first good channel
         best_freq[0] = (int(best_freq[0]) / 1000000) * 1000000
-        #print "choosing frequency ", best_freq[0], " with noise floor", best_freq[1]
+        print "\nchoosing frequency ", best_freq[0], " with noise floor", best_freq[1]
         #print self.tb.set_freq(best_freq[0])
         self.prep_to_txrx()
         return best_freq
