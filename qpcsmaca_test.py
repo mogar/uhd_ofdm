@@ -320,7 +320,7 @@ def main():
     #while not EOF_rcvd:
     #    time.sleep(options.pkt_gen_time)
 
-    while time.clock() - start_time < 60:#10*60:
+    while time.clock() - start_time < 10*60:
      	pass
     
     mac.stop()

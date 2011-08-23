@@ -79,7 +79,7 @@ class cs_mac(threading.Thread):
         self.thresh_second = options.thresh_second
         self.thresh_qp = options.thresh_qp
         self.sense_time = options.quiet_period
-        self.quiet_period = int(self.sense_time/self.backoff_time_unit) #backoff units for quiet period
+        self.quiet_period = int(self.sense_time/self.backoff_time_unit) #backoff units for qp
         #print "quiet period is ", self.quiet_period, " backoff units"
         self.qp_interval = options.qp_interval
         self.qp_counter = 0 #keep track of when we're at the qp interval
@@ -206,7 +206,7 @@ class cs_mac(threading.Thread):
         """
         Prepare the PHY to sense the spectrum.
         
-        @param hold_freq: determines whether the PHY will switch channels as it sense or only sense the current channel.
+        @param hold_freq: determines whether the PHY will switch channels as it senses.
         """
         #set frequency hold
         self.tb.sense.set_hold_freq(hold_freq)
@@ -320,7 +320,8 @@ class cs_mac(threading.Thread):
             self.sender = payload[1]
             payload = payload[2:]
             if self.verbose:
-                print "RX: ", payload, ", State: ", self.state, ", backoff: ", self.backoff, ", next call: ", self.next_call
+                print "RX: ", payload, ", State: ", self.state, ", backoff: ", 
+                    self.backoff, ", next call: ", self.next_call
 
             #is this a ctl packet?
             if len(payload) == 3:
