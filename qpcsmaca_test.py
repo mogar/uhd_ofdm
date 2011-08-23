@@ -315,7 +315,7 @@ def main():
         if pkts_sent > options.packets:
             mac.new_packet('x', "EOF")
         else:
-            mac.new_packet('x', str(pkts_sent).zfill(3) + options.pkt_padding * "k")    # run the tests
+            mac.new_packet('x', str(pkts_sent).zfill(3) + options.pkt_padding * "k") # run the tests
         pkts_sent += 1
     #while not EOF_rcvd:
     #    time.sleep(options.pkt_gen_time)

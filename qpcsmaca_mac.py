@@ -320,8 +320,7 @@ class cs_mac(threading.Thread):
             self.sender = payload[1]
             payload = payload[2:]
             if self.verbose:
-                print "RX: ", payload, ", State: ", self.state, ", backoff: ", 
-                    self.backoff, ", next call: ", self.next_call
+                print "RX: ", payload, ", State: ", self.state, ", backoff: ", self.backoff, ", next call: ", self.next_call
 
             #is this a ctl packet?
             if len(payload) == 3:
