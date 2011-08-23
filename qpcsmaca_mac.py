@@ -127,9 +127,8 @@ class cs_mac(threading.Thread):
                     occupied = self.sense_current_freq()
                     if occupied == 1: #one means a primary is using the channel
                         #change channels
-                        print "changing channel"
                         new_freq = self.find_best_freq()
-                        print "switching to ", new_freq
+                        print "\nswitching to ", new_freq
                     while self.next_call != "NOW" and (time.clock() - last_call < self.next_call):
                         #if sensing didn't take a long as we thought it would, wait for a while
                         pass
@@ -261,8 +260,8 @@ class cs_mac(threading.Thread):
                     best_freq.append([m.center_freq, fft_sum_db])
         best_freq = best_freq[0] #just choose the first good channel
         best_freq[0] = (int(best_freq[0]) / 1000000) * 1000000
-        print "choosing frequency ", best_freq[0], " with noise floor", best_freq[1]
-        print self.tb.set_freq(best_freq[0])
+        #print "choosing frequency ", best_freq[0], " with noise floor", best_freq[1]
+        #print self.tb.set_freq(best_freq[0])
         self.prep_to_txrx()
         return best_freq
 		
@@ -283,7 +282,7 @@ class cs_mac(threading.Thread):
         #do threshold comparisons
         ret_val = 0
         if fft_sum_db > self.thresh_primary:
-            print fft_sum_db
+            #print fft_sum_db
             ret_val = 1
         elif fft_sum_db > self.thresh_second:
             ret_val = 2
