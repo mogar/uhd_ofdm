@@ -335,6 +335,7 @@ class cs_mac(threading.Thread):
                     self.DAT_rcvd = True
                     self.rx_callback("R:" + payload)
             else: #it's a data packet
+                print "received packet"
                 self.DAT_rcvd = True
                 if self.log_mac:
                     log_file = open('rx_data_log.dat', 'a')
