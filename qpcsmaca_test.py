@@ -304,7 +304,6 @@ def main():
     #TODO: find_best_freq is broken, include this when it is fixed
     if options.autoselect_freq:
         new_freq = mac.find_best_freq()
-        print "\nswitching to ", new_freq
         raw_input("Press Enter to begin transmitting") 
 
     mac.start()

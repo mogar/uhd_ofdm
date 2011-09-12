@@ -177,6 +177,7 @@ class sense_path(gr.hier_block2):
     
     def set_hold_freq(self, hold):
         self.hold_freq = hold
+        self.set_next_freq()
         
     def update_samp_rate(self, samp_rate):
         self.usrp_rate = samp_rate

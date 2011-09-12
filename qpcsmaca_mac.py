@@ -128,7 +128,6 @@ class cs_mac(threading.Thread):
                     if occupied == 1: #one means a primary is using the channel
                         #change channels
                         new_freq = self.find_best_freq()
-                        print "\nswitching to ", new_freq
                     while self.next_call != "NOW" and (time.clock() - last_call < self.next_call):
                         #if sensing didn't take a long as we thought it would, wait for a while
                         pass
@@ -209,6 +208,8 @@ class cs_mac(threading.Thread):
         @param hold_freq: determines whether the PHY will switch channels as it senses.
         """
         #set frequency hold
+        if not hold_freq:
+            self.tb.sense.next_freq = self.tb.sense.min_center_freq
         self.tb.sense.set_hold_freq(hold_freq)
         #stop rcving
         self.tb.rx_valve.set_enabled(False)
@@ -226,7 +227,8 @@ class cs_mac(threading.Thread):
         #done sensing
         self.tb.sense_valve.set_enabled(False)
         #flush the queue
-        self.tb.sense.msgq.flush()
+        #self.tb.sense.msgq.flush()
+        
         #reset rate
         self.tb.set_rate(self.txrx_rate)
         #start rcving
@@ -237,6 +239,7 @@ class cs_mac(threading.Thread):
         Gather spectrum sense data and interpret it to find the frequency with the lowest noise
         floor.
         """
+        print "finding best new freq, in state ", self.state
         self.prep_to_sense(False)
         best_freq = []
         i = 0
@@ -251,18 +254,19 @@ class cs_mac(threading.Thread):
             for item in m.data:
                 temp_list.append(10*math.log10(item) + self.k)
             fft_sum_db = sum(temp_list)/m.vlen
-		    
+            
+            print m.center_freq, fft_sum_db
             #skip the first and last channels to account for noise at the edges
-            if i == 1 or i >= self.tb.sense.num_channels:
+            if ((int(m.center_freq) / 1000000) * 1000000) <= self.tb.sense.min_center_freq or ((int(m.center_freq) / 1000000) * 1000000) >= self.tb.sense.max_freq:#i == 1 or i >= self.tb.sense.num_channels:#
                 pass
             else: #elif fft_sum_db < best_freq[1] or best_freq[1] == 0:
                 if fft_sum_db < self.thresh_primary:
-                    best_freq.append([m.center_freq, fft_sum_db])
-        best_freq = best_freq[0] #just choose the first good channel
-        best_freq[0] = (int(best_freq[0]) / 1000000) * 1000000
-        #print "\nchoosing frequency ", best_freq[0], " with noise floor", best_freq[1]
+                    best_freq.append(m.center_freq)
+        best_freq = min(best_freq) #just choose the first good channel
+        best_freq = (int(best_freq) / 1000000) * 1000000
+        print "\nchoosing frequency ", best_freq
         #print 
-        self.tb.set_freq(best_freq[0])
+        self.tb.set_freq(best_freq)
         self.prep_to_txrx()
         return best_freq
 		
@@ -278,7 +282,7 @@ class cs_mac(threading.Thread):
         for item in m.data:
             temp_list.append(10*math.log10(item) + self.k)
         fft_sum_db = sum(temp_list)/m.vlen
-        #print fft_sum_db
+        print fft_sum_db
         
         #do threshold comparisons
         ret_val = 0
