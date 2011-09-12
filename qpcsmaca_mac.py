@@ -239,29 +239,30 @@ class cs_mac(threading.Thread):
         Gather spectrum sense data and interpret it to find the frequency with the lowest noise
         floor.
         """
-        print "finding best new freq, in state ", self.state
         self.prep_to_sense(False)
         best_freq = []
-        i = 0
-        while i < self.tb.sense.num_channels:
-            i = i+1
-            # Get the next message sent from the C++ code (blocking call).
-            # It contains the center frequency and the mag squared of the fft
-            m = parse_msg(self.tb.sense.msgq.delete_head())
-        
-            #fft_sum_db = 20*math.log10(sum(m.data)/m.vlen)
-            temp_list = []
-            for item in m.data:
-                temp_list.append(10*math.log10(item) + self.k)
-            fft_sum_db = sum(temp_list)/m.vlen
+        while len(best_freq) == 0:
+            i = 0
+            while i < self.tb.sense.num_channels:
+                i = i+1
+                # Get the next message sent from the C++ code (blocking call).
+                # It contains the center frequency and the mag squared of the fft
+                m = parse_msg(self.tb.sense.msgq.delete_head())
             
-            print m.center_freq, fft_sum_db
-            #skip the first and last channels to account for noise at the edges
-            if ((int(m.center_freq) / 1000000) * 1000000) <= self.tb.sense.min_center_freq or ((int(m.center_freq) / 1000000) * 1000000) >= self.tb.sense.max_freq:#i == 1 or i >= self.tb.sense.num_channels:#
-                pass
-            else: #elif fft_sum_db < best_freq[1] or best_freq[1] == 0:
-                if fft_sum_db < self.thresh_primary:
-                    best_freq.append(m.center_freq)
+                #fft_sum_db = 20*math.log10(sum(m.data)/m.vlen)
+                temp_list = []
+                for item in m.data:
+                    temp_list.append(10*math.log10(item) + self.k)
+                fft_sum_db = sum(temp_list)/m.vlen
+                
+                print m.center_freq, fft_sum_db
+                #skip the first and last channels to account for noise at the edges
+                if ((int(m.center_freq) / 1000000) * 1000000) <= self.tb.sense.min_center_freq or ((int(m.center_freq) / 1000000) * 1000000) >= self.tb.sense.max_freq:#i == 1 or i >= self.tb.sense.num_channels:#
+                    pass
+                else: #elif fft_sum_db < best_freq[1] or best_freq[1] == 0:
+                    if fft_sum_db < self.thresh_primary:
+                        best_freq.append(m.center_freq)
+                        
         best_freq = min(best_freq) #just choose the first good channel
         best_freq = (int(best_freq) / 1000000) * 1000000
         print "\nchoosing frequency ", best_freq
@@ -282,7 +283,7 @@ class cs_mac(threading.Thread):
         for item in m.data:
             temp_list.append(10*math.log10(item) + self.k)
         fft_sum_db = sum(temp_list)/m.vlen
-        print fft_sum_db
+        #print fft_sum_db
         
         #do threshold comparisons
         ret_val = 0
