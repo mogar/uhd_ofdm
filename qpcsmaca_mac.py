@@ -265,7 +265,7 @@ class cs_mac(threading.Thread):
                         
         best_freq = min(best_freq) #just choose the first good channel
         best_freq = (int(best_freq) / 1000000) * 1000000
-        print "\nchoosing frequency ", best_freq
+        print "\nchoosing frequency ", best_freq, " at time ", time.strftime("%X")
         #print 
         self.tb.set_freq(best_freq)
         self.prep_to_txrx()
