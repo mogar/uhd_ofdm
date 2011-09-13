@@ -173,7 +173,7 @@ def main():
                           help="set the start of the frequency band to sense over [default=%default]")
     parser.add_option("", "--end-freq", type="eng_float", default="671M",
                           help="set the end of the frequency band to sense over [default=%default]")
-    expert.add_option("", "--channel_rate", type="eng_float", default=6e6,
+    parser.add_option("", "--channel_rate", type="eng_float", default=6e6,
                           help="Set bandwidth of an expected channel [default=%default]")
      
                       
