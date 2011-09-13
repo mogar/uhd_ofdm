@@ -218,7 +218,7 @@ def main():
             
             #change channels
             if options.num_channels == 1:
-                new_freq = (options.start_freq + 3*options.channel_rate/2) + (random.randint(0,6))*options.channel_rate
+                new_freq = (options.start_freq + 3*options.channel_rate/2) + (random.randint(0,4))*options.channel_rate
             elif options.num_channels == 3:
                 new_freq = (options.start_freq + 3*options.channel_rate/2) + (random.randint(1,5))*options.rate
             else:
