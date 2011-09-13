@@ -73,12 +73,12 @@ class parse_msg(object):
 
 class sense_path(gr.hier_block2):
 
-    def __init__(self, usrp_rate, tuner_callback, options):
+    def __init__(self, tuner_callback, options):
         gr.hier_block2.__init__(self, "sense_path",
                 gr.io_signature(1, 1, gr.sizeof_gr_complex), # Input signature
                 gr.io_signature(0, 0, 0)) # Output signature
         
-        self.usrp_rate = usrp_rate
+        self.usrp_rate = options.chan_samp_rate
         self.usrp_tune = tuner_callback
             
         self.threshold = options.threshold
@@ -204,6 +204,8 @@ class sense_path(gr.hier_block2):
                           help="set the start of the frequency band to sense over [default=%default]")
         normal.add_option("", "--end-freq", type="eng_float", default="671M",
                           help="set the end of the frequency band to sense over [default=%default]")
+        expert.add_option("", "--chan-samp_rate", type="eng_float", default=6000000,
+                          help="set the sample rate of each 6MHz channel [default=%default]")
     # Make a static method to call before instantiation
     add_options = staticmethod(add_options)
             

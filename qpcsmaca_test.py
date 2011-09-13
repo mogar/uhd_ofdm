@@ -71,7 +71,7 @@ class usrp_graph(gr.top_block):
         self.rxpath = receive_path(callback, options)
         self.rx_valve = gr.copy(gr.sizeof_gr_complex)
                 
-        self.sense = sense_path(options.channel_rate, self.set_freq, options)
+        self.sense = sense_path(self.set_freq, options)
         self.sense_valve = gr.copy(gr.sizeof_gr_complex)
         
         self.rx_valve.set_enabled(True)
