@@ -117,7 +117,7 @@ class my_top_block(gr.top_block):
         normal.add_option("-v", "--verbose", action="store_true", default=False)
         expert.add_option("", "--tx-freq", type="eng_float", default=None,
                           help="set transmit frequency to FREQ [default=%default]", metavar="FREQ")
-        expert.add_option("-r", "--rate", type="eng_float", default=1e6,
+        expert.add_option("-r", "--rate", type="eng_float", default=2e6,
                           help="set fpga sample rate to RATE [default=%default]")
     # Make a static method to call before instantiation
     add_options = staticmethod(add_options)
@@ -165,7 +165,7 @@ def main():
                       help="enable discontinuous mode")
     parser.add_option("","--gain", type="eng_float", default=13,
                       help="set transmitter gain [default=%default]")
-    parser.add_option("","--channel-interval", type="eng_float", default=.25,
+    parser.add_option("","--channel-interval", type="eng_float", default=5,
                       help="set the time between channel changes [default=%default]")
     parser.add_option("","--num-channels", type="int", default=1,
                       help="set number of (contiguous) occupied channels [default=%default]")
@@ -173,6 +173,9 @@ def main():
                           help="set the start of the frequency band to sense over [default=%default]")
     parser.add_option("", "--end-freq", type="eng_float", default="671M",
                           help="set the end of the frequency band to sense over [default=%default]")
+    expert.add_option("", "--channel_rate", type="eng_float", default=6e6,
+                          help="Set bandwidth of an expected channel [default=%default]")
+     
                       
     my_top_block.add_options(parser, expert_grp)
     transmit_path.add_options(parser, expert_grp)
@@ -215,9 +218,9 @@ def main():
             
             #change channels
             if options.num_channels == 1:
-                new_freq = options.start_freq + (random.uniform(0,6))*6000000#options.rate
+                new_freq = options.start_freq + (random.randint(0,6))*options.channel_rate
             elif options.num_channels == 3:
-                new_freq = options.start_freq + (random.uniform(1,5))*options.rate
+                new_freq = options.start_freq + (random.randint(1,5))*options.rate
             else:
                 pass
                 #just do nothing for now
