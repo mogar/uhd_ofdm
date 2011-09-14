@@ -78,16 +78,17 @@ class sense_path(gr.hier_block2):
                 gr.io_signature(1, 1, gr.sizeof_gr_complex), # Input signature
                 gr.io_signature(0, 0, 0)) # Output signature
         
-        self.usrp_rate = options.chan_samp_rate
+        self.usrp_rate = options.channel_rate
         self.usrp_tune = tuner_callback
             
         self.threshold = options.threshold
         
+        self.freq_step = options.chan_bandwidth
         self.min_freq = options.start_freq
         self.max_freq = options.end_freq
         self.hold_freq = False
         
-        self.num_channels = (self.max_freq - self.min_freq)/self.usrp_rate
+        self.num_channels = (self.max_freq - self.min_freq)/self.freq_step
 
         if self.min_freq > self.max_freq:
             self.min_freq, self.max_freq = self.max_freq, self.min_freq   # swap them
@@ -125,7 +126,7 @@ class sense_path(gr.hier_block2):
         # This allows us to discard the bins on both ends of the spectrum.
 
         #changed on 2011 May 31, MR -- maybe change back at some point
-        self.freq_step = self.usrp_rate
+        
         self.min_center_freq = self.min_freq + self.freq_step/2
         nsteps = math.ceil((self.max_freq - self.min_freq) / self.freq_step)
         self.max_center_freq = self.min_center_freq + (nsteps * self.freq_step)
@@ -181,7 +182,7 @@ class sense_path(gr.hier_block2):
         
     def update_samp_rate(self, samp_rate):
         self.usrp_rate = samp_rate
-        self.freq_step = samp_rate
+        #self.freq_step = samp_rate
         
         
     def add_options(normal, expert):
@@ -204,7 +205,7 @@ class sense_path(gr.hier_block2):
                           help="set the start of the frequency band to sense over [default=%default]")
         normal.add_option("", "--end-freq", type="eng_float", default="671M",
                           help="set the end of the frequency band to sense over [default=%default]")
-        expert.add_option("", "--chan-samp_rate", type="eng_float", default=6000000,
+        expert.add_option("", "--chan-bandwidth", type="eng_float", default=6000000,
                           help="set the sample rate of each 6MHz channel [default=%default]")
     # Make a static method to call before instantiation
     add_options = staticmethod(add_options)

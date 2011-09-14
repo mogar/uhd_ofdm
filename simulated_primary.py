@@ -205,6 +205,8 @@ def main():
     #timing parameters
     last_change = time.clock()
     
+    print "\nstarting frequency: ", options.tx_freq, " at time: ", time.strftime("%X")
+    
     while n < nbytes:
         if time.clock() - last_change < options.channel_interval:
             #pktno % 65535 to account for sending very large amounts of data
@@ -225,7 +227,7 @@ def main():
                 pass
                 #just do nothing for now
             last_change = time.clock()
-            print "\nchanging frequencies to ", new_freq
+            print "\nchanging frequencies to ", new_freq, " at time ", time.strftime("%X")
             tb.set_freq(new_freq)
         
     send_pkt(eof=True)

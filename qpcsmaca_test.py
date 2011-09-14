@@ -320,7 +320,7 @@ def main():
     #while not EOF_rcvd:
     #    time.sleep(options.pkt_gen_time)
 
-    while time.clock() - start_time < 10*60:
+    while time.clock() - start_time < 10*1:
      	pass
     
     mac.stop()
@@ -328,6 +328,7 @@ def main():
     
     #do stuff with the measurement results
     print
+    print  time.strftime("%X")
     print "this node sent:     ", pkts_sent, " packets"
     print "there were:         ", len(tx_failures), " packets that were not successfully sent"
     #print "this node received: ", num_acks, " ACK packets"

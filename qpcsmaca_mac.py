@@ -74,7 +74,7 @@ class cs_mac(threading.Thread):
         
         #spectrum sense parameters
         self.txrx_rate = options.samp_rate #transmit and receive bandwidth
-        self.channel_rate = options.channel_rate #bandwidth of channel
+        self.channel_rate = options.channel_rate #sense bandwidth of channel (not nec. 6 MHz)
         self.thresh_primary = options.thresh_primary
         self.thresh_second = options.thresh_second
         self.thresh_qp = options.thresh_qp
@@ -263,6 +263,7 @@ class cs_mac(threading.Thread):
                     if fft_sum_db < self.thresh_primary:
                         best_freq.append(m.center_freq)
                         
+        #TODO: use a better algorithm
         best_freq = min(best_freq) #just choose the first good channel
         best_freq = (int(best_freq) / 1000000) * 1000000
         print "\nchoosing frequency ", best_freq, " at time ", time.strftime("%X")
@@ -516,7 +517,7 @@ class cs_mac(threading.Thread):
                           help="log all MAC layer tx/rx data [default=%default]")
         expert.add_option("-r", "--samp_rate", type="intx", default=800000,
                           help="set sample rate for USRP to SAMP_RATE [default=%default]")
-        expert.add_option("", "--channel_rate", type="intx", default=6250000,
+        expert.add_option("", "--channel_rate", type="intx", default=4000000,
                           help="set channel rate for USRP spectrum sense to SAMP_RATE [default=%default]")
         expert.add_option("", "--thresh_primary", type="eng_float", default=-50,
                           help="set primary detection threshold [default=%default]")
