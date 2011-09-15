@@ -209,7 +209,8 @@ class cs_mac(threading.Thread):
         """
         #set frequency hold
         if not hold_freq:
-            self.tb.sense.next_freq = self.tb.sense.channels[0] #min_center_freq
+            self.tb.sense.current_chan = self.tb.sense.num_channels
+        #    self.tb.sense.next_freq = self.tb.sense.channels[0] #min_center_freq
         self.tb.sense.set_hold_freq(hold_freq)
         #stop rcving
         self.tb.rx_valve.set_enabled(False)

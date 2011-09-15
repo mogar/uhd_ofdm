@@ -222,7 +222,7 @@ def main():
         else:
             
             #change channels
-            current_chan = random.randint(0, len(channels))
+            current_chan = random.randint(0, len(channels) - 1)
             new_freq = channels[current_chan]
             
             #if options.num_channels == 1:

@@ -306,6 +306,11 @@ def main():
         new_freq = mac.find_best_freq()
         raw_input("Press Enter to begin transmitting") 
 
+    while 1:
+        os.system("clear")
+        new_freq = mac.find_best_freq()
+        time.sleep(.1)
+
     mac.start()
     
     start_time = time.clock()
