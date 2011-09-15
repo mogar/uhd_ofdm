@@ -43,35 +43,36 @@ class usrp_graph(gr.top_block):
     def __init__(self, callback, options):
         gr.top_block.__init__(self)
 
-        self._tx_freq            = options.tx_freq         # tranmitter's center frequency
+        #self._tx_freq            = options.tx_freq         # tranmitter's center frequency
         self._tx_gain            = options.tx_gain         # transmitter's gain
         self._samp_rate          = options.samp_rate       # sample rate for USRP
-        self._rx_freq            = options.rx_freq         # receiver's center frequency
+        #self._rx_freq            = options.rx_freq         # receiver's center frequency
         self._rx_gain            = options.rx_gain         # receiver's gain
 
-        if self._tx_freq is None:
-            sys.stderr.write("-f FREQ or --freq FREQ or --tx-freq FREQ must be specified\n")
-            raise SystemExit
+        #if self._tx_freq is None:
+        #    sys.stderr.write("-f FREQ or --freq FREQ or --tx-freq FREQ must be specified\n")
+        #    raise SystemExit
 
-        if self._rx_freq is None:
-            sys.stderr.write("-f FREQ or --freq FREQ or --rx-freq FREQ must be specified\n")
-            raise SystemExit
+        #if self._rx_freq is None:
+        #    sys.stderr.write("-f FREQ or --freq FREQ or --rx-freq FREQ must be specified\n")
+        #    raise SystemExit
 
         # Set up USRP sink and source
         self._setup_usrp_sink()
         self._setup_usrp_source()
-
-        # Set center frequency of USRP
-        ok = self.set_freq(self._tx_freq)
-        if not ok:
-            print "Failed to set Tx frequency to %s" % (eng_notation.num_to_str(self._tx_freq),)
-            raise ValueError
 
         self.txpath = transmit_path(options)
         self.rxpath = receive_path(callback, options)
         self.rx_valve = gr.copy(gr.sizeof_gr_complex)
                 
         self.sense = sense_path(self.set_freq, options)
+        
+        # Set center frequency of USRP
+        ok = self.set_freq(self.sense.channels[0]) #self._tx_freq)
+        if not ok:
+            print "Failed to set Tx frequency to %s" % (eng_notation.num_to_str(self.sense.channels[0]),)
+            raise ValueError
+        
         self.sense_valve = gr.copy(gr.sizeof_gr_complex)
         
         self.rx_valve.set_enabled(True)
@@ -154,12 +155,12 @@ class usrp_graph(gr.top_block):
         """
         Adds usrp-specific options to the Options Parser
         """
-        add_freq_option(normal)
+        #add_freq_option(normal)
         normal.add_option("-v", "--verbose", action="store_true", default=False)
-        expert.add_option("", "--rx-freq", type="eng_float", default=None,
-                          help="set Rx frequency to FREQ [default=%default]", metavar="FREQ")
-        expert.add_option("", "--tx-freq", type="eng_float", default=None,
-                          help="set Tx frequency to FREQ [default=%default]", metavar="FREQ")
+        #expert.add_option("", "--rx-freq", type="eng_float", default=None,
+        #                  help="set Rx frequency to FREQ [default=%default]", metavar="FREQ")
+        #expert.add_option("", "--tx-freq", type="eng_float", default=None,
+        #                  help="set Tx frequency to FREQ [default=%default]", metavar="FREQ")
         expert.add_option("-r", "--samp_rate", type="intx", default=800000,
                            help="set sample rate for USRP to SAMP_RATE [default=%default]")
         normal.add_option("", "--rx-gain", type="eng_float", default=14, metavar="GAIN",
@@ -182,7 +183,7 @@ class usrp_graph(gr.top_block):
         print
         print "PHY parameters"
         print "samp_rate        %3d"   % (self._samp_rate)
-        print "Tx Frequency:    %s"    % (eng_notation.num_to_str(self._tx_freq))
+        #print "Tx Frequency:    %s"    % (eng_notation.num_to_str(self._tx_freq))
         print "Tx antenna gain  %s"    % (self._tx_gain)
         print "Rx antenna gain  %s"    % (self._rx_gain)
         
@@ -261,10 +262,10 @@ def main():
         parser.print_help(sys.stderr)
         sys.exit(1)
 
-    if options.rx_freq is None or options.tx_freq is None:
-        sys.stderr.write("You must specify -f FREQ or --freq FREQ\n")
-        parser.print_help(sys.stderr)
-        sys.exit(1)
+    #if options.rx_freq is None or options.tx_freq is None:
+    #    sys.stderr.write("You must specify -f FREQ or --freq FREQ\n")
+    #    parser.print_help(sys.stderr)
+    #    sys.exit(1)
     if options.address is None:
     	sys.stderr.write("You must specify a node address\n")
     	parser.print_help(sys.stderr)
@@ -294,7 +295,7 @@ def main():
     print "address:        %s"   % (options.address)
     print
     print "modulation:     %s"   % (options.modulation,)
-    print "freq:           %s"   % (eng_notation.num_to_str(options.tx_freq))
+    #print "freq:           %s"   % (eng_notation.num_to_str(options.tx_freq))
 
     tb.rxpath.set_carrier_threshold(options.carrier_threshold)
     print "Carrier sense threshold:", options.carrier_threshold, "dB"

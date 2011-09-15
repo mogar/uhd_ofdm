@@ -83,15 +83,18 @@ class sense_path(gr.hier_block2):
             
         self.threshold = options.threshold
         
-        self.freq_step = options.chan_bandwidth
-        self.min_freq = options.start_freq
-        self.max_freq = options.end_freq
+        #self.freq_step = options.chan_bandwidth
+        #self.min_freq = options.start_freq
+        #self.max_freq = options.end_freq
         self.hold_freq = False
         
-        self.num_channels = (self.max_freq - self.min_freq)/self.freq_step
+        
+        self.channels = [600000000, 615000000, 620000000, 625000000, 640000000, 645000000, 650000000]
+        self.current_chan = 0
+        self.num_channels = len(self.channels) #(self.max_freq - self.min_freq)/self.freq_step
 
-        if self.min_freq > self.max_freq:
-            self.min_freq, self.max_freq = self.max_freq, self.min_freq   # swap them
+        #if self.min_freq > self.max_freq:
+        #    self.min_freq, self.max_freq = self.max_freq, self.min_freq   # swap them
             
         self.fft_size = options.sense_fft_size
 
@@ -127,11 +130,11 @@ class sense_path(gr.hier_block2):
 
         #changed on 2011 May 31, MR -- maybe change back at some point
         
-        self.min_center_freq = self.min_freq + self.freq_step/2
-        nsteps = math.ceil((self.max_freq - self.min_freq) / self.freq_step)
-        self.max_center_freq = self.min_center_freq + (nsteps * self.freq_step)
+        #self.min_center_freq = self.min_freq + self.freq_step/2
+        #nsteps = math.ceil((self.max_freq - self.min_freq) / self.freq_step)
+        #self.max_center_freq = self.min_center_freq + (nsteps * self.freq_step)
 
-        self.next_freq = self.min_center_freq
+        self.next_freq = self.channels[self.current_chan] #self.min_center_freq
         
         tune_delay  = max(0, int(round(options.tune_delay * self.usrp_rate / self.fft_size)))  # in fft_frames
         dwell_delay = max(1, int(round(options.dwell_delay * self.usrp_rate / self.fft_size))) # in fft_frames
@@ -151,9 +154,10 @@ class sense_path(gr.hier_block2):
             return 0 #current_freq
             
         target_freq = self.next_freq
-        self.next_freq = self.next_freq + self.freq_step
-        if self.next_freq >= self.max_center_freq:
-            self.next_freq = self.min_center_freq
+        self.current_chan = (self.current_chan + 1) % self.num_channels
+        self.next_freq = self.channels[self.current_chan] #self.next_freq + self.freq_step
+        #if self.next_freq >= self.max_center_freq:
+        #    self.next_freq = self.min_center_freq
             
         if not self.set_freq(target_freq):
             print "Failed to set frequency to", target_freq
@@ -201,10 +205,10 @@ class sense_path(gr.hier_block2):
                           help="Attempt to enable real-time scheduling")
         normal.add_option("", "--num-tests", type="intx", default=1,
                           help="set the number of times to test the frequency band [default=%default]")
-        normal.add_option("", "--start-freq", type="eng_float", default="631M",
-                          help="set the start of the frequency band to sense over [default=%default]")
-        normal.add_option("", "--end-freq", type="eng_float", default="671M",
-                          help="set the end of the frequency band to sense over [default=%default]")
+        #normal.add_option("", "--start-freq", type="eng_float", default="631M",
+        #                  help="set the start of the frequency band to sense over [default=%default]")
+        #normal.add_option("", "--end-freq", type="eng_float", default="671M",
+        #                  help="set the end of the frequency band to sense over [default=%default]")
         expert.add_option("", "--chan-bandwidth", type="eng_float", default=6000000,
                           help="set the sample rate of each 6MHz channel [default=%default]")
     # Make a static method to call before instantiation

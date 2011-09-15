@@ -97,7 +97,7 @@ class cs_mac(threading.Thread):
         #test stuff, remove this before actually running the MAC
         #self.backoff_times = []
         #self.ready_to_backoff = 0
-        self.nominal_freq = options.tx_freq
+        #self.nominal_freq = options.tx_freq
 
     def run(self): #becomes a thread with mac.start() is called
         """
@@ -209,7 +209,7 @@ class cs_mac(threading.Thread):
         """
         #set frequency hold
         if not hold_freq:
-            self.tb.sense.next_freq = self.tb.sense.min_center_freq
+            self.tb.sense.next_freq = self.tb.sense.channels[0] #min_center_freq
         self.tb.sense.set_hold_freq(hold_freq)
         #stop rcving
         self.tb.rx_valve.set_enabled(False)
@@ -255,13 +255,13 @@ class cs_mac(threading.Thread):
                     temp_list.append(10*math.log10(item) + self.k)
                 fft_sum_db = sum(temp_list)/m.vlen
                 
-                #print m.center_freq, fft_sum_db
+                print m.center_freq, fft_sum_db
                 #skip the first and last channels to account for noise at the edges
-                if ((int(m.center_freq) / 1000000) * 1000000) <= self.tb.sense.min_center_freq or ((int(m.center_freq) / 1000000) * 1000000) >= self.tb.sense.max_freq:#i == 1 or i >= self.tb.sense.num_channels:#
-                    pass
-                else: #elif fft_sum_db < best_freq[1] or best_freq[1] == 0:
-                    if fft_sum_db < self.thresh_primary:
-                        best_freq.append(m.center_freq)
+                #if ((int(m.center_freq) / 1000000) * 1000000) <= self.tb.sense.min_center_freq or ((int(m.center_freq) / 1000000) * 1000000) >= self.tb.sense.max_freq:#i == 1 or i >= self.tb.sense.num_channels:#
+                #    pass
+                #else: #elif fft_sum_db < best_freq[1] or best_freq[1] == 0:
+                if fft_sum_db < self.thresh_primary:
+                    best_freq.append(m.center_freq)
                         
         #TODO: use a better algorithm
         best_freq = min(best_freq) #just choose the first good channel

@@ -44,7 +44,7 @@ class my_top_block(gr.top_block):
         gr.top_block.__init__(self)
 
         self._tx_freq            = options.tx_freq         # tranmitter's center frequency
-        self._rate               = options.rate*options.num_channels           # USRP sample rate
+        self._rate               = options.rate #*options.num_channels           # USRP sample rate
         self.gain                 = options.gain               # USRP gain
 
         if self._tx_freq is None:
@@ -167,12 +167,12 @@ def main():
                       help="set transmitter gain [default=%default]")
     parser.add_option("","--channel-interval", type="eng_float", default=5,
                       help="set the time between channel changes [default=%default]")
-    parser.add_option("","--num-channels", type="int", default=1,
-                      help="set number of (contiguous) occupied channels [default=%default]")
-    parser.add_option("", "--start-freq", type="eng_float", default="631M",
-                          help="set the start of the frequency band to sense over [default=%default]")
-    parser.add_option("", "--end-freq", type="eng_float", default="671M",
-                          help="set the end of the frequency band to sense over [default=%default]")
+    #parser.add_option("","--num-channels", type="int", default=1,
+    #                  help="set number of (contiguous) occupied channels [default=%default]")
+    #parser.add_option("", "--start-freq", type="eng_float", default="631M",
+    #                      help="set the start of the frequency band to sense over [default=%default]")
+    #parser.add_option("", "--end-freq", type="eng_float", default="671M",
+    #                      help="set the end of the frequency band to sense over [default=%default]")
     parser.add_option("", "--channel_rate", type="eng_float", default=6e6,
                           help="Set bandwidth of an expected channel [default=%default]")
      
@@ -185,7 +185,9 @@ def main():
 
     (options, args) = parser.parse_args ()
 
-    total_samp_rate = options.num_channels*options.rate
+    total_samp_rate = options.rate #*options.num_channels
+
+    channels = [600000000, 615000000, 620000000, 625000000, 640000000, 645000000, 650000000]
 
     # build the graph
     tb = my_top_block(options)
@@ -207,6 +209,7 @@ def main():
     
     print "\nstarting frequency: ", options.tx_freq, " at time: ", time.strftime("%X")
     
+    current_chan = 0
     while n < nbytes:
         if time.clock() - last_change < options.channel_interval:
             #pktno % 65535 to account for sending very large amounts of data
@@ -219,12 +222,15 @@ def main():
         else:
             
             #change channels
-            if options.num_channels == 1:
-                new_freq = (options.start_freq + 3*options.channel_rate/2) + (random.randint(0,4))*options.channel_rate
-            elif options.num_channels == 3:
-                new_freq = (options.start_freq + 3*options.channel_rate/2) + (random.randint(1,5))*options.rate
-            else:
-                pass
+            current_chan = random.randint(0, len(channels))
+            new_freq = channels[current_chan]
+            
+            #if options.num_channels == 1:
+            #    new_freq = (options.start_freq + 3*options.channel_rate/2) + (random.randint(0,4))*options.channel_rate
+            #elif options.num_channels == 3:
+            #    new_freq = (options.start_freq + 3*options.channel_rate/2) + (random.randint(1,5))*options.rate
+            #else:
+            #    pass
                 #just do nothing for now
             last_change = time.clock()
             print "\nchanging frequencies to ", new_freq, " at time ", time.strftime("%X")
