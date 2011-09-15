@@ -193,9 +193,9 @@ class sense_path(gr.hier_block2):
         """
         Add sense-path specific options to the Options parser
         """
-        normal.add_option("", "--tune-delay", type="eng_float", default=.02, metavar="SECS",
+        normal.add_option("", "--tune-delay", type="eng_float", default=.03, metavar="SECS",
                           help="time to delay (in seconds) after changing frequency [default=%default]")
-        normal.add_option("", "--dwell-delay", type="eng_float", default=.04, metavar="SECS",
+        normal.add_option("", "--dwell-delay", type="eng_float", default=.05, metavar="SECS",
                           help="time to dwell (in seconds) at a given frequncy [default=%default]")
         normal.add_option("-F", "--sense-fft-size", type="int", default=512,
                           help="specify number of FFT bins [default=%default]")
