@@ -173,7 +173,9 @@ def main():
     #                      help="set the start of the frequency band to sense over [default=%default]")
     #parser.add_option("", "--end-freq", type="eng_float", default="671M",
     #                      help="set the end of the frequency band to sense over [default=%default]")
-    parser.add_option("", "--channel_rate", type="eng_float", default=6e6,
+    parser.add_option("", "--channel_rate", action="store_true", default=False,
+                          help="enable random frequency selection")
+    parser.add_option("", "--random", type="eng_float", default=6e6,
                           help="Set bandwidth of an expected channel [default=%default]")
      
                       
@@ -187,7 +189,7 @@ def main():
 
     total_samp_rate = options.rate #*options.num_channels
 
-    channels = [600000000, 620000000, 625000000, 640000000, 645000000, 650000000]
+    channels = [615000000, 620000000, 625000000, 640000000, 645000000, 650000000]
 
     # build the graph
     tb = my_top_block(options)
@@ -222,9 +224,12 @@ def main():
         else:
             
             #change channels
-            current_chan = random.randint(0, len(channels) - 1)
+            if options.random:
+                current_chan = random.randint(0, len(channels) - 1)
+            else:
+                current_chan = (current_chan + 1) % len(channels)
             new_freq = channels[current_chan]
-            
+
             #if options.num_channels == 1:
             #    new_freq = (options.start_freq + 3*options.channel_rate/2) + (random.randint(0,4))*options.channel_rate
             #elif options.num_channels == 3:

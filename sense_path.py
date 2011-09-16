@@ -89,7 +89,7 @@ class sense_path(gr.hier_block2):
         self.hold_freq = False
         
         
-        self.channels = [600000000, 620000000, 625000000, 640000000, 645000000, 650000000]
+        self.channels = [615000000, 620000000, 625000000, 640000000, 645000000, 650000000]
         self.current_chan = 0
         self.num_channels = len(self.channels) #(self.max_freq - self.min_freq)/self.freq_step
 
