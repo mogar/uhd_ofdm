@@ -189,7 +189,7 @@ def main():
 
     total_samp_rate = options.rate #*options.num_channels
 
-    channels = [615000000, 620000000, 625000000, 640000000, 645000000, 650000000]
+    channels = [600000000, 620000000, 625000000, 640000000, 645000000, 650000000]
 
     # build the graph
     tb = my_top_block(options)
