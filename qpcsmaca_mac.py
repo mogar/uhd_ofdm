@@ -256,7 +256,7 @@ class cs_mac(threading.Thread):
                     temp_list.append(10*math.log10(item) + self.k)
                 fft_sum_db = sum(temp_list)/m.vlen
                 
-                print m.center_freq, fft_sum_db
+                #print m.center_freq, fft_sum_db
                 #skip the first and last channels to account for noise at the edges
                 #if ((int(m.center_freq) / 1000000) * 1000000) <= self.tb.sense.min_center_freq or ((int(m.center_freq) / 1000000) * 1000000) >= self.tb.sense.max_freq:#i == 1 or i >= self.tb.sense.num_channels:#
                 #    pass
@@ -342,7 +342,7 @@ class cs_mac(threading.Thread):
                     self.DAT_rcvd = True
                     self.rx_callback("R:" + payload)
             else: #it's a data packet
-                print "received packet"
+                #print "received packet"
                 self.DAT_rcvd = True
                 if self.log_mac:
                     log_file = open('rx_data_log.dat', 'a')
