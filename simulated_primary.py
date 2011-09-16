@@ -173,9 +173,9 @@ def main():
     #                      help="set the start of the frequency band to sense over [default=%default]")
     #parser.add_option("", "--end-freq", type="eng_float", default="671M",
     #                      help="set the end of the frequency band to sense over [default=%default]")
-    parser.add_option("", "--channel_rate", action="store_true", default=False,
+    parser.add_option("", "--random", action="store_true", default=False,
                           help="enable random frequency selection")
-    parser.add_option("", "--random", type="eng_float", default=6e6,
+    parser.add_option("", "--channel_rate", type="eng_float", default=6e6,
                           help="Set bandwidth of an expected channel [default=%default]")
      
                       
@@ -228,7 +228,7 @@ def main():
                 current_chan = random.randint(0, len(channels) - 1)
             else:
                 current_chan = (current_chan + 1) % len(channels)
-            new_freq = channels[current_chan]
+                new_freq = channels[current_chan]
 
             #if options.num_channels == 1:
             #    new_freq = (options.start_freq + 3*options.channel_rate/2) + (random.randint(0,4))*options.channel_rate
