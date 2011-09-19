@@ -210,6 +210,7 @@ class cs_mac(threading.Thread):
         """
         #set frequency hold
         self.old_freq = self.tb.u_snk.get_center_freq()
+        #print self.old_freq
         if not hold_freq:
             self.tb.sense.current_chan = self.tb.sense.num_channels
         #    self.tb.sense.next_freq = self.tb.sense.channels[0] #min_center_freq

@@ -228,7 +228,7 @@ def main():
                 current_chan = random.randint(0, len(channels) - 1)
             else:
                 current_chan = (current_chan + 1) % len(channels)
-                new_freq = channels[current_chan]
+            new_freq = channels[current_chan]
 
             #if options.num_channels == 1:
             #    new_freq = (options.start_freq + 3*options.channel_rate/2) + (random.randint(0,4))*options.channel_rate
