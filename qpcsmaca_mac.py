@@ -269,7 +269,7 @@ class cs_mac(threading.Thread):
                     best_freq.append(m.center_freq)
                         
         #TODO: use a better algorithm
-        best_freq = min(best_freq) #just choose the first good channel
+        best_freq = max(best_freq) #just choose the first good channel
         best_freq = (int(best_freq) / 1000000) * 1000000
         print "\nchoosing frequency ", best_freq, " at time ", time.strftime("%X")
         #print 
