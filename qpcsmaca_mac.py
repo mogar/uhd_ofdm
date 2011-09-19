@@ -83,6 +83,7 @@ class cs_mac(threading.Thread):
         #print "quiet period is ", self.quiet_period, " backoff units"
         self.qp_interval = options.qp_interval
         self.qp_counter = 0 #keep track of when we're at the qp interval
+        self.old_freq = 0
         
         #used in calculating the avg power in dB
         self.k = 0
@@ -208,6 +209,7 @@ class cs_mac(threading.Thread):
         @param hold_freq: determines whether the PHY will switch channels as it senses.
         """
         #set frequency hold
+        self.old_freq = self.tb.u_snk.get_center_freq()
         if not hold_freq:
             self.tb.sense.current_chan = self.tb.sense.num_channels
         #    self.tb.sense.next_freq = self.tb.sense.channels[0] #min_center_freq
@@ -261,7 +263,8 @@ class cs_mac(threading.Thread):
                 #if ((int(m.center_freq) / 1000000) * 1000000) <= self.tb.sense.min_center_freq or ((int(m.center_freq) / 1000000) * 1000000) >= self.tb.sense.max_freq:#i == 1 or i >= self.tb.sense.num_channels:#
                 #    pass
                 #else: #elif fft_sum_db < best_freq[1] or best_freq[1] == 0:
-                if fft_sum_db < self.thresh_primary and m.center_freq > 200000000 and m.center_freq != self.tb.sense.channels[0]:
+                if fft_sum_db < self.thresh_primary and m.center_freq > 200000000 and \
+                        m.center_freq != self.tb.sense.channels[0] and m.center_freq != self.old_freq:
                     best_freq.append(m.center_freq)
                         
         #TODO: use a better algorithm
