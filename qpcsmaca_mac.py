@@ -269,7 +269,7 @@ class cs_mac(threading.Thread):
                     best_freq.append(m.center_freq)
                         
         #TODO: use a better algorithm
-        best_freq = max(best_freq) #just choose the first good channel
+        best_freq = min(best_freq) #just choose the first good channel
         best_freq = (int(best_freq) / 1000000) * 1000000
         print "\nchoosing frequency ", best_freq, " at time ", time.strftime("%X")
         #print 
@@ -289,7 +289,7 @@ class cs_mac(threading.Thread):
         for item in m.data:
             temp_list.append(10*math.log10(item) + self.k)
         fft_sum_db = sum(temp_list)/m.vlen
-        #print fft_sum_db
+        print fft_sum_db
         
         #do threshold comparisons
         ret_val = 0
