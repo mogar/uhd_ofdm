@@ -261,7 +261,7 @@ class cs_mac(threading.Thread):
                 #if ((int(m.center_freq) / 1000000) * 1000000) <= self.tb.sense.min_center_freq or ((int(m.center_freq) / 1000000) * 1000000) >= self.tb.sense.max_freq:#i == 1 or i >= self.tb.sense.num_channels:#
                 #    pass
                 #else: #elif fft_sum_db < best_freq[1] or best_freq[1] == 0:
-                if fft_sum_db < self.thresh_primary and m.center_freq > 200000000:
+                if fft_sum_db < self.thresh_primary and m.center_freq > 200000000 and m.center_freq != self.tb.sense.channels[0]:
                     best_freq.append(m.center_freq)
                         
         #TODO: use a better algorithm
