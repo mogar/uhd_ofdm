@@ -284,9 +284,10 @@ class cs_mac(threading.Thread):
                         
         #TODO: stop cheating
         if self.old_freq == self.tb.sense.channels[1]:
-            best_freq = self.tb.sense.channels[2]
+            best_freq = self.tb.sense.channels[4]
         else:
             best_freq = self.tb.sense.channels[1]
+        #TODO: this is what it should be
         #best_freq = power_levels.index(min(power_levels)) #choose the best frequency
         #best_freq = frequencies[best_freq]
         
