@@ -243,9 +243,16 @@ class cs_mac(threading.Thread):
         Gather spectrum sense data and interpret it to find the frequency with the lowest noise
         floor.
         """
+        #TODO
+        #Ok, this algorithm totally sucks. It would be better if I could reliably sense the
+        #simulated primary signal, but that interferes too much with adjacent channels, even if
+        #those adjacent channels are like 10 MHz away. Fricken USRPs. 
+        #I'm cheating and making the USRPs choose one of only two frequencies. As soon as I get
+        #primary sensing more reliable, I'll switch back to the original frequency selection algorithm.
         self.prep_to_sense(False)
-        best_freq = []
-        while len(best_freq) == 0:
+        frequencies = []
+        power_levels = []
+        while len(frequencies) == 0:
             i = 0
             while i < self.tb.sense.num_channels:
                 i = i+1
@@ -260,17 +267,29 @@ class cs_mac(threading.Thread):
                 fft_sum_db = sum(temp_list)/m.vlen
                 
                 #print m.center_freq, fft_sum_db
+                
+                #this is a relic of using contiguous frequency bands rather than a set of
+                #channels to select from
                 #skip the first and last channels to account for noise at the edges
                 #if ((int(m.center_freq) / 1000000) * 1000000) <= self.tb.sense.min_center_freq or ((int(m.center_freq) / 1000000) * 1000000) >= self.tb.sense.max_freq:#i == 1 or i >= self.tb.sense.num_channels:#
                 #    pass
                 #else: #elif fft_sum_db < best_freq[1] or best_freq[1] == 0:
-                if fft_sum_db < self.thresh_primary and m.center_freq > 200000000 and \
-                        m.center_freq != self.tb.sense.channels[0] and m.center_freq != self.old_freq:
-                    best_freq.append(m.center_freq)
+                
+                #the >200MHz thing is because sometimes m.center_freq is returned 
+                #as 0 for some reason (bug somewhere?)
+                if fft_sum_db < self.thresh_primary and m.center_freq > 200000000:
+                    frequencies.append(m.center_freq)
+                    power_levels.append(fft_sum_db)
+                    
                         
-        #TODO: use a better algorithm
-        best_freq = min(best_freq) #just choose the first good channel
-        best_freq = (int(best_freq) / 1000000) * 1000000
+        #TODO: stop cheating
+        if self.old_freq == self.tb.sense.channels[1]:
+            best_freq = self.tb.sense.channels[2]
+        else:
+            best_freq = self.tb.sense.channels[1]
+        #best_freq = power_levels.index(min(power_levels)) #choose the best frequency
+        #best_freq = frequencies[best_freq]
+        
         print "\nchoosing frequency ", best_freq, " at time ", time.strftime("%X")
         #print 
         self.tb.set_freq(best_freq)

@@ -230,6 +230,10 @@ def main():
     global EOF_rcvd
     global num_acks
     
+    
+    ###########################
+    #set up options
+    ###########################
     parser = OptionParser (option_class=eng_option, conflict_handler="resolve")
     expert_grp = parser.add_option_group("Expert")
     parser.add_option("-m", "--modulation", type="choice", choices=['bpsk', 'qpsk'],
@@ -273,6 +277,11 @@ def main():
     	parser.print_help(sys.stderr)
     	sys.exit(1)
 
+
+    
+    ###########################
+    #set PHY and MAC
+    ###########################
     # Attempt to enable realtime scheduling
     r = gr.enable_realtime_scheduling()
     if r == gr.RT_OK:
@@ -292,7 +301,11 @@ def main():
 
     mac.set_flow_graph(tb)    # give the MAC a handle for the PHY
     mac.set_error_array(tx_failures)
-    
+ 
+ 
+    ###########################
+    #manage packet generation and data gathering
+    ###########################
     print
     print "address:        %s"   % (options.address)
     print
@@ -327,6 +340,8 @@ def main():
     #while not EOF_rcvd:
     #    time.sleep(options.pkt_gen_time)
 
+    #for some reason the timing was off, and I need a factor of two to get it 
+    #approximately to where it should be
     while time.clock() - start_time < 2*options.test_time:
      	pass
     
@@ -352,7 +367,7 @@ def main():
     
 
     
-    tb.stop()     # but if it does, tell flow graph to stop.
+    tb.stop()     
     tb.wait()     # wait for it to finish
     
 
