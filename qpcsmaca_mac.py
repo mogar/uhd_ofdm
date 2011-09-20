@@ -289,7 +289,7 @@ class cs_mac(threading.Thread):
         for item in m.data:
             temp_list.append(10*math.log10(item) + self.k)
         fft_sum_db = sum(temp_list)/m.vlen
-        print fft_sum_db
+        #print fft_sum_db
         
         #do threshold comparisons
         ret_val = 0

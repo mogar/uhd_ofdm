@@ -13,17 +13,79 @@ You may have to account for frequency offsets when using OFDM between two USRPs.
 manually by transmitting from one USRP on the desired frequency (in our examples 648.8M). At the
 receiver, use an FFT to view the OFDM signal. There should be two null subcarriers right in the
 center of the OFDM boxcar. Those should be centered around your center frequency. Adjust the 
-tx frequency until it's as close as you can get.
+tx frequency until it's as close as you can get. I didn't have to worry about this, but other
+people on the GNURadio mailing list did (with their own OFDM applications).
 
 
 
 To use the benchmark scripts:
 -----------------------------
-
+With the N210s
 TX side: python benchmark_ofdm_tx.py -f 648.8M -v --gain=11.5 -M 15 --tx-amplitude=.8 --rate=1M
 RX side: python benchmark_ofdm_rx.py -f 648.8M -v --rx-gain=17 --rate=1M
 
-To use ofdm_csma_ca_test:
--------------------------
+The files (as well as most of the other files in this project) make use of the
+receive_path.py and transmit_path.py files to manage the OFDM encoding and decoding.
 
-python ofdm_csma_ca_test.py -f 650M -v -c 60 --fft-length=256 --occupied-tones=128
+Tunnel.py
+________
+This file is intended to form a wireless tunnel between two computers using the TUN/TAP linux 
+interface. I updated this file to use UHD (rather than the original USRP code), but I haven't tested it.
+
+
+______________________
+
+The following files are mainly for an 802.11af research project done at the University of Washington Fundamentals of Networking Lab.
+http://www.ee.washington.edu/research/funlab/
+
+
+To use csma_ca_sm_test:
+_______________________
+Note that this isn't actually 802.11, it's just a custom CSMA/CA MAC that approximates (poorly)
+what is used by 802.11 so that the qp algorithm as implemented on the USRPs can be compared to
+something with the same hardware limitations.
+
+This file is the PHY and test implementation of the csma/ca MAC. The MAC (contained in 
+csma_ca_mac_sm.py) handles all of the state machine transitions and timing. The test file
+instantiates the MAC and generates packets. The test file is set up to run for a certain
+amount of time and then stop and print data on packets sent and received. 
+
+To run a test, you have to run the following command on two different csma/ca nodes. The nodes
+must have the same frequency (-f option), but different addresses (--address option). Actually,
+assuming you're using the same type of USRP, all these options should probably be the same between 
+nodes (except the address).
+
+python csma_ca_sm_test.py -f 640M --fft-length=256 --occupied-tones=128 --rx-gain=14 --pkt-gen-time=.05 --address=a --packets=3000 --backoff=.005 --ctl=.04 -r 800000 --cw-min=2 --pkt-padding=1000 --tx-gain=11.75
+
+To use qpcsmaca_test:
+_____________________
+This file is similar to the csma_ca_sm_test file, but it also implements cognitive radio behavior
+by switching frequencies if the present frequency is occupied. 
+
+The idea is that during the backoff (after DIFS) the nodes will sense the present frequency for a
+licensed primary user. This is known as a quiet period sense, since theoretically all qpCSMA/CA nodes
+will not be transmitting at this point. If a primary user is sensed as being present, then the node will
+begin sensing all available channels for one that is unoccupied. It will then switch to that unoccupied
+channel and 
+
+Relevant files are:
+qpcsmaca_test.py - implement the PHY, instantiate MAC and sense, generate packets and manage test
+qpcsmaca_mac.py - implement the MAC state machine and manage sensing
+sense_path.py - implement sense algorithms (this is also where the available channels are hard-coded)
+
+python qpcsmaca_test.py --fft-length=256 --occupied-tones=128 --address=a --autoselect-freq --chan-bandwidth=800000 --thresh_primary=-53 --qp-interval=10 --test-time=300
+
+Running the qpcsmaca code isn't very worthwhile if you aren't also modeling a primary user of the spectrum.
+
+To use simulated_primary:
+_________________________
+This file transmits OFDM packets on a set of channels (available channels are hardcoded in, just as they
+are in sense-path for the qp algorithm). The channels can be chosen randomly or serially. The parameters
+for the primary aren't actually too important for the tests this file is intended for. Since we're not
+trying to transmit data (just occupy a frequency band) I chose these parameters empirically to best
+occupy a certain frequency band without disturbing adjacent frequencies. 
+
+These parameters work alright for the E100, but it may be worth rewriting the simulated primary from scratch to better match the real world TV signals. It's kind of a pain to tune the qp algorithm and the
+simulated primary to actually work well together.
+
+python simulated_primary -f 650M --fft-length=1024 --occupied-tones=900 --gain=17 --tx-amplitude=.95 -M 40 --rate=1000000 --random
