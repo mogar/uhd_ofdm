@@ -229,6 +229,8 @@ def main():
                       help="set the time between sending each packet (s) [default=%default]")
     parser.add_option("", "--pkt-padding", type="int", default=0,
                       help="pad packet with pkt-padding number of extra chars [default=%default]")
+    parser.add_option("", "--test-time", type="int", default=500,
+                      help="number of seconds to run the test for [default=%default]")
                       
     usrp_graph.add_options(parser, expert_grp)
     transmit_path.add_options(parser, expert_grp)
@@ -296,7 +298,7 @@ def main():
     #while not EOF_rcvd:
     #    time.sleep(options.pkt_gen_time)
 
-    while time.clock() - start_time < 10*60:
+    while time.clock() - start_time < 2*options.test_time:
     	pass
     
     mac.stop()
