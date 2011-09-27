@@ -250,7 +250,7 @@ class cs_mac(threading.Thread):
         #I'm cheating and making the USRPs choose one of only two frequencies. As soon as I get
         #primary sensing more reliable, I'll switch back to the original frequency selection algorithm.
         self.prep_to_sense(False)
-        frequencies = ""#[]
+        frequencies = []#""
         power_levels = []
         while len(frequencies) == 0:
             i = 0
