@@ -286,6 +286,7 @@ def main():
 
     mac.start()
     
+    print  time.strftime("%X")
     start_time = time.clock()
     while (pkts_sent < options.packets + 3):# or not EOF_rcvd):
         #if options.verbose:
@@ -300,6 +301,8 @@ def main():
 
     while time.clock() - start_time < 2*options.test_time:
     	pass
+    print  time.strftime("%X")
+
     
     mac.stop()
     mac.wait()
