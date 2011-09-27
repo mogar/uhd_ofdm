@@ -278,7 +278,7 @@ class cs_mac(threading.Thread):
                 #the >200MHz thing is because sometimes m.center_freq is returned 
                 #as 0 for some reason (bug somewhere?)
                 if fft_sum_db < self.thresh_primary and m.center_freq > 200000000:
-                    frequencies = frequencies.append(m.center_freq)# + "0"#
+                    frequencies.append(m.center_freq)#= frequencies + "0"#
                     power_levels.append(fft_sum_db)
                 #else:
                 #    frequencies = frequencies + "1"
