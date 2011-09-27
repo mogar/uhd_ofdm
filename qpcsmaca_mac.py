@@ -278,15 +278,15 @@ class cs_mac(threading.Thread):
                 #the >200MHz thing is because sometimes m.center_freq is returned 
                 #as 0 for some reason (bug somewhere?)
                 if fft_sum_db < self.thresh_primary and m.center_freq > 200000000:
-                    frequencies = frequencies + "0"#.append(m.center_freq)
+                    frequencies = frequencies.append(m.center_freq)# + "0"#
                     power_levels.append(fft_sum_db)
-                else:
-                    frequencies = frequencies + "1"
+                #else:
+                #    frequencies = frequencies + "1"
 
-        frequencies = frequencies + "\n"                    
-        log_file = open('sense_log.dat', 'a')
-        log_file.write(frequencies)
-        log_file.close()                
+        #frequencies = frequencies + "\n"                    
+        #log_file = open('sense_log.dat', 'a')
+        #log_file.write(frequencies)
+        #log_file.close()                
         #TODO: stop cheating
         if self.old_freq == self.tb.sense.channels[1]:
             best_freq = self.tb.sense.channels[4]
